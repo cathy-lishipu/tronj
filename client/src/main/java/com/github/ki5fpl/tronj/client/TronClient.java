@@ -2,11 +2,16 @@ package com.github.ki5fpl.tronj.client;
 
 import com.github.ki5fpl.tronj.abi.FunctionEncoder;
 import com.github.ki5fpl.tronj.abi.TypeReference;
-import com.github.ki5fpl.tronj.abi.datatypes.*;
+import com.github.ki5fpl.tronj.abi.datatypes.Address;
+import com.github.ki5fpl.tronj.abi.datatypes.Bool;
+import com.github.ki5fpl.tronj.abi.datatypes.Function;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
+import com.github.ki5fpl.tronj.api.GrpcAPI;
+import com.github.ki5fpl.tronj.api.GrpcAPI.BytesMessage;
 import com.github.ki5fpl.tronj.api.WalletGrpc;
 import com.github.ki5fpl.tronj.crypto.SECP256K1;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
+import com.github.ki5fpl.tronj.proto.Common.SmartContract;
 import com.github.ki5fpl.tronj.proto.Contract.TransferAssetContract;
 import com.github.ki5fpl.tronj.proto.Contract.TransferContract;
 import com.github.ki5fpl.tronj.proto.Contract.TriggerSmartContract;
@@ -17,14 +22,13 @@ import com.google.protobuf.ByteString;
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.StatusRuntimeException;
-import java.util.concurrent.TimeUnit;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.SHA256;
 import org.bouncycastle.util.encoders.Hex;
+
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Arrays;
 
 public class TronClient {
     public final WalletGrpc.WalletBlockingStub blockingStub;
@@ -209,6 +213,32 @@ public class TronClient {
         System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
         System.out.println("======== Result ========\n" + ret.toString());
+    }
+
+    /**
+     * get a smart contract from a contract address
+     * @contractAddress smart contract address
+     */
+    public Contract getContract(String contractAddress) throws Exception{
+        ByteString rawAddr = parseAddress(contractAddress);
+        BytesMessage param = 
+            BytesMessage.newBuilder()
+            .setValue(rawAddr)
+            .build();
+        
+            SmartContract cntr = blockingStub.getContract(param);
+
+            Contract contract = 
+                new Contract.Builder()
+                .setCntrAddr(cntr.getContractAddress())
+                .setBytecode(cntr.getBytecode())
+                .setName(cntr.getName())
+                .setAbi(cntr.getAbi())
+                .setOriginEnergyLimit(cntr.getOriginEnergyLimit())
+                .setConsumeUserResourcePercent(cntr.getConsumeUserResourcePercent())
+                .build();
+
+        return contract;
     }
 
 }

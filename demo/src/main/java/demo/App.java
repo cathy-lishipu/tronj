@@ -10,6 +10,7 @@ import com.github.ki5fpl.tronj.abi.datatypes.*;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Bytes10;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint32;
+import com.github.ki5fpl.tronj.client.Contract;
 import com.github.ki5fpl.tronj.client.TronClient;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
 import com.github.ki5fpl.tronj.proto.Contract.TriggerSmartContract;
@@ -119,6 +120,17 @@ public class App {
         }
     }
 
+    public void getSmartContract() {
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            //get JST contract
+            Contract cntr = client.getContract("TF17BgPaZYbz8oxbjhriubPDsA7ArKoLX3");
+            System.out.println("Contract name: " + cntr.getName());
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
     public static void main(String[] args) {
         App app = new App();
         System.out.println(app.encodeFunctionCalling());
@@ -127,6 +139,7 @@ public class App {
         // app.trc20Encode();
         // app.sendTrx();
         // app.sendTrc20Transaction();
-        app.transferTrc20();
+        // app.transferTrc20();
+        app.getSmartContract();
     }
 }

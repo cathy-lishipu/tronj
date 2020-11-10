@@ -9,6 +9,7 @@ import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
 import com.github.ki5fpl.tronj.api.GrpcAPI;
 import com.github.ki5fpl.tronj.api.GrpcAPI.BytesMessage;
 import com.github.ki5fpl.tronj.api.WalletGrpc;
+import com.github.ki5fpl.tronj.client.contract.Contract;
 import com.github.ki5fpl.tronj.crypto.SECP256K1;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
 import com.github.ki5fpl.tronj.proto.Common.SmartContract;

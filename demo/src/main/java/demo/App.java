@@ -10,7 +10,7 @@ import com.github.ki5fpl.tronj.abi.datatypes.*;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Bytes10;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint32;
-import com.github.ki5fpl.tronj.client.Contract;
+import com.github.ki5fpl.tronj.client.contract.Contract;
 import com.github.ki5fpl.tronj.client.TronClient;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
 import com.github.ki5fpl.tronj.proto.Contract.TriggerSmartContract;
@@ -124,8 +124,9 @@ public class App {
         TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
         try {
             //get JST contract
-            Contract cntr = client.getContract("TF17BgPaZYbz8oxbjhriubPDsA7ArKoLX3");
+            Contract cntr = client.getContract("THi2qJf6XmvTJSpZHc17HgQsmJop6kb3ia");
             System.out.println("Contract name: " + cntr.getName());
+            System.out.println("Contract ABI: " + cntr.getAbi());
         } catch (Exception e) {
             System.out.println("error: " + e);
         }

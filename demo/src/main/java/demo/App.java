@@ -23,23 +23,25 @@ public class App {
     public String encodeFunctionCalling() {
         System.out.println("! function sam(bytes _, bool _, address _, uint[])");
         Function function = new Function("sam",
-            Arrays.asList(new DynamicBytes("dave".getBytes()), new Bool(true),
-                new Address("T9yKC9LCoVvmhaFxKcdK9iL18TUWtyFtjh"),
-                new DynamicArray<>(
-                    new Uint(BigInteger.ONE), new Uint(BigInteger.valueOf(2)), new Uint(BigInteger.valueOf(3)))),
-            Collections.emptyList());
+                Arrays.asList(new DynamicBytes("dave".getBytes()), new Bool(true),
+                        new Address("T9yKC9LCoVvmhaFxKcdK9iL18TUWtyFtjh"),
+                        new DynamicArray<>(
+                                new Uint(BigInteger.ONE), new Uint(BigInteger.valueOf(2)), new Uint(BigInteger.valueOf(3)))),
+                Collections.emptyList());
         String encodedHex = FunctionEncoder.encode(function);
         return encodedHex;
     }
 
     public void decodeFunctionReturn() {
         Function function = new Function("test", Collections.<Type>emptyList(),
-            Arrays.asList(new TypeReference<Uint>() {}, new TypeReference<Address>() {}));
+                Arrays.asList(new TypeReference<Uint>() {
+                }, new TypeReference<Address>() {
+                }));
 
         List<Type> outputs =
-            FunctionReturnDecoder.decode("0000000000000000000000000000000000000000000000000000000000000037"
-                    + "00000000000000000000000028263f17875e4f277a72f6c6910bb7a692108b3e",
-                function.getOutputParameters());
+                FunctionReturnDecoder.decode("0000000000000000000000000000000000000000000000000000000000000037"
+                                + "00000000000000000000000028263f17875e4f277a72f6c6910bb7a692108b3e",
+                        function.getOutputParameters());
         for (Type obj : outputs) {
             System.out.println(obj.getTypeAsString() + "  " + obj.toString());
             if (Uint.class.isInstance(obj)) {
@@ -52,9 +54,10 @@ public class App {
 
     public void trc20Encode() {
         Function trc20Transfer = new Function("transfer",
-            Arrays.asList(new Address("TV3KSjZHF4o6bC92SMrjhNJ3RE65xHNDuo"),
-                new Uint256(BigInteger.valueOf(1000).multiply(BigInteger.valueOf(10).pow(18)))),
-            Arrays.asList(new TypeReference<Bool>() {}));
+                Arrays.asList(new Address("TV3KSjZHF4o6bC92SMrjhNJ3RE65xHNDuo"),
+                        new Uint256(BigInteger.valueOf(1000).multiply(BigInteger.valueOf(10).pow(18)))),
+                Arrays.asList(new TypeReference<Bool>() {
+                }));
 
         String encodedHex = FunctionEncoder.encode(trc20Transfer);
         System.out.println("! encoding a TRC20 transfer");
@@ -71,50 +74,138 @@ public class App {
         }
     }
 
-    public void sendTrc20Transaction() {
-        System.out.println("============ TRC20 transfer =============");
-        // Any of `ofShasta`, `ofMainnet`.
-        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
-
-        // transfer(address _to,uint256 _amount) returns (bool)
-        // _to = TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA
-        // _amount = 10 * 10^18
-        Function trc20Transfer = new Function("transfer",
-            Arrays.asList(new Address("TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA"),
-                new Uint256(BigInteger.valueOf(10).multiply(BigInteger.valueOf(10).pow(18)))),
-            Arrays.asList(new TypeReference<Bool>() {}));
-
-        String encodedHex = FunctionEncoder.encode(trc20Transfer);
-        TriggerSmartContract trigger =
-            TriggerSmartContract.newBuilder()
-                .setOwnerAddress(TronClient.parseAddress("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8"))
-                .setContractAddress(TronClient.parseAddress("TF17BgPaZYbz8oxbjhriubPDsA7ArKoLX3")) // JST
-                .setData(TronClient.parseHex(encodedHex))
-                .build();
-
-        System.out.println("trigger:\n" + trigger);
-
-        TransactionExtention txnExt = client.blockingStub.triggerContract(trigger);
-        System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
-
-        Transaction unsignedTxn = txnExt.getTransaction.toBuilder()
-            .setRawData(txnExt.getTransaction().getRawData().toBuilder().setFeeLimit(10000000L))
-            .build();
-
-        Transaction signedTxn = client.signTransaction(unsignedTxn);
-
-        System.out.println(signedTxn.toString());
-        TransactionReturn ret = client.blockingStub.broadcastTransaction(signedTxn);
-        System.out.println("======== Result ========\n" + ret.toString());
+    public void freezeBalance() {
+        System.out.println("============= freeze balance =============");
+        TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            client.freezeBalance("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", 1_000_000L, 3L,1, "TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA");
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
     }
+
+    public void unFreezeBalance() {
+        System.out.println("============= unFreeze balance =============");
+        TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
+        int resourceCode = 0;
+
+        try {
+            client.unfreezeBalance("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", 1);
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void getBlockByNum() {
+        System.out.println("============= getBlockByNum =============");
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            client.getBlockByNum(1);
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void getNowBlock() {
+        System.out.println("============= getNowBlock =============");
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            client.getNowBlock();
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void getNodeInfo() {
+        System.out.println("============= getNodeInfo=============");
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            client.getNodeInfo();
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void listNodes() {
+        System.out.println("============= listNodes=============");
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            client.listNodes();
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void getTransactionInfoByBlockNum() {
+        System.out.println("============= getTransactionInfoByBlockNum =============");
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            client.getTransactionInfoByBlockNum(10530140);
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void getTransactionInfoById(){
+        System.out.println("============= getTransactionInfoById =============");
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            client.getTransactionInfoById("b412408cc57fb7acf3bdedb2b1ad96a5d1ca46367825725c4d0a75ce9eb2879b");
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void getAccount(){
+        System.out.println("============= getAccount =============");
+        TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            client.getAccount("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8");
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void listWitnesses(){
+        System.out.println("============= listWitnesses =============");
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            client.listWitnesses();
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void voteWitness(){
+        System.out.println("============= voteWitness =============");
+        TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
+        HashMap<String, String> witness = new HashMap<>();
+        witness.put("TXyZjVcYurrbE43b2MfMtN34uA3tJL85zy","1");
+        try {
+            client.voteWitness("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8",witness);
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
 
     public static void main(String[] args) {
         App app = new App();
-        System.out.println(app.encodeFunctionCalling());
-
-        app.decodeFunctionReturn();
-        app.trc20Encode();
-        app.sendTrx();
-        app.sendTrc20Transaction();
+//        System.out.println(app.encodeFunctionCalling());
+//        app.decodeFunctionReturn();
+//        app.trc20Encode();
+//        app.sendTrx();
+//        app.sendTrc20();
+//        app.freezeBalance();
+//        app.unFreezeBalance();
+//        app.getBlockByNum();
+//        app.getNowBlock();
+//        app.getNodeInfo();
+//        app.listNodes();
+//        app.getTransactionInfoByBlockNum();
+        app.getTransactionInfoById();
+        app.getAccount();
+//        app.listWitnesses();
+//        app.voteWitness();
     }
 }

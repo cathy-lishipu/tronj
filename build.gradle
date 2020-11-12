@@ -29,6 +29,7 @@ subprojects {
 
     dependencies {
         testImplementation "org.junit.jupiter:junit-jupiter:$junitJupiterVersion"
+        compile "com.madgag.spongycastle:core:1.58.0.0"
     }
 
     test {

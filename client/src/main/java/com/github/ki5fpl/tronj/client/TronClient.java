@@ -1,23 +1,53 @@
 package com.github.ki5fpl.tronj.client;
 
+import com.github.ki5fpl.tronj.abi.TypeReference;
+import com.github.ki5fpl.tronj.abi.Utils;
+import com.github.ki5fpl.tronj.abi.datatypes.Address;
+import com.github.ki5fpl.tronj.abi.datatypes.Bool;
+import com.github.ki5fpl.tronj.abi.datatypes.Function;
+import com.github.ki5fpl.tronj.abi.datatypes.Int;
+import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
 import com.github.ki5fpl.tronj.api.WalletGrpc;
 import com.github.ki5fpl.tronj.crypto.SECP256K1;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
+import com.github.ki5fpl.tronj.proto.Chain.Block;
 import com.github.ki5fpl.tronj.proto.Contract.TransferAssetContract;
+import com.github.ki5fpl.tronj.proto.Contract.TriggerSmartContract;
+import com.github.ki5fpl.tronj.proto.Contract.UnfreezeBalanceContract;
+import com.github.ki5fpl.tronj.proto.Contract.FreezeBalanceContract;
 import com.github.ki5fpl.tronj.proto.Contract.TransferContract;
+import com.github.ki5fpl.tronj.proto.Contract.VoteWitnessContract;
 import com.github.ki5fpl.tronj.proto.Response.TransactionExtention;
 import com.github.ki5fpl.tronj.proto.Response.TransactionReturn;
+import com.github.ki5fpl.tronj.proto.Response.NodeInfo;
+import com.github.ki5fpl.tronj.proto.Response.WitnessList;
+import com.github.ki5fpl.tronj.api.GrpcAPI.NumberMessage;
+import com.github.ki5fpl.tronj.api.GrpcAPI.EmptyMessage;
+import com.github.ki5fpl.tronj.api.GrpcAPI.BytesMessage;
+import com.github.ki5fpl.tronj.api.GrpcAPI.AccountAddressMessage;
 import com.github.ki5fpl.tronj.utils.Base58Check;
 import com.google.protobuf.ByteString;
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.SHA256;
 import org.bouncycastle.util.encoders.Hex;
+import com.github.ki5fpl.tronj.abi.FunctionEncoder;
+import com.github.ki5fpl.tronj.abi.FunctionReturnDecoder;
+import com.github.ki5fpl.tronj.proto.Response.NodeList;
+import com.github.ki5fpl.tronj.proto.Response.TransactionInfoList;
+import com.github.ki5fpl.tronj.proto.Response.TransactionInfo;
+import com.github.ki5fpl.tronj.proto.Response.Account;
 
 public class TronClient {
     public final WalletGrpc.WalletBlockingStub blockingStub;
@@ -97,7 +127,7 @@ public class TronClient {
     public Transaction signTransaction(TransactionExtention txnExt, SECP256K1.KeyPair kp) {
         SECP256K1.Signature sig = SECP256K1.sign(Bytes32.wrap(txnExt.getTxid().toByteArray()), kp);
         Transaction signedTxn =
-            txnExt.getTransaction().toBuilder().addSignature(ByteString.copyFrom(sig.encodedBytes().toArray())).build();
+                txnExt.getTransaction().toBuilder().addSignature(ByteString.copyFrom(sig.encodedBytes().toArray())).build();
         return signedTxn;
     }
 
@@ -126,10 +156,10 @@ public class TronClient {
         byte[] rawTo = Base58Check.base58ToBytes(to);
 
         TransferContract req = TransferContract.newBuilder()
-                                   .setOwnerAddress(ByteString.copyFrom(rawFrom))
-                                   .setToAddress(ByteString.copyFrom(rawTo))
-                                   .setAmount(amount)
-                                   .build();
+                .setOwnerAddress(ByteString.copyFrom(rawFrom))
+                .setToAddress(ByteString.copyFrom(rawTo))
+                .setAmount(amount)
+                .build();
         System.out.println("transfer => " + req.toString());
 
         TransactionExtention txnExt = blockingStub.createTransaction2(req);
@@ -152,11 +182,11 @@ public class TronClient {
         byte[] rawTokenId = Integer.toString(tokenId).getBytes();
 
         TransferAssetContract req = TransferAssetContract.newBuilder()
-                                        .setOwnerAddress(ByteString.copyFrom(rawFrom))
-                                        .setToAddress(ByteString.copyFrom(rawTo))
-                                        .setAssetName(ByteString.copyFrom(rawTokenId))
-                                        .setAmount(amount)
-                                        .build();
+                .setOwnerAddress(ByteString.copyFrom(rawFrom))
+                .setToAddress(ByteString.copyFrom(rawTo))
+                .setAssetName(ByteString.copyFrom(rawTokenId))
+                .setAmount(amount)
+                .build();
         System.out.println("transfer TRC10 => " + req.toString());
 
         TransactionExtention txnExt = blockingStub.transferAsset2(req);
@@ -168,4 +198,149 @@ public class TronClient {
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
         System.out.println("======== Result ========\n" + ret.toString());
     }
+
+    public void freezeBalance(String from, long balance, long duration, int resourceCode, String receive) throws Exception {
+
+        byte[] rawFrom = Base58Check.base58ToBytes(from);
+        byte[] rawReceive = Base58Check.base58ToBytes(receive);
+        FreezeBalanceContract freezeBalanceContract=
+                FreezeBalanceContract.newBuilder()
+                        .setOwnerAddress(ByteString.copyFrom(rawFrom))
+                        .setFrozenBalance(balance)
+                        .setFrozenDuration(duration)
+                        .setResourceValue(resourceCode)
+                        .setReceiverAddress(ByteString.copyFrom(rawReceive))
+                        .build();
+        System.out.println("freezeBalance => " + freezeBalanceContract.toString());
+        TransactionExtention txnExt = blockingStub.freezeBalance2(freezeBalanceContract);
+        System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
+
+        Transaction signedTxn = signTransaction(txnExt);
+
+        System.out.println(signedTxn.toString());
+        TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
+        System.out.println("======== Result ========\n" + ret.toString());
+    }
+
+    public void unfreezeBalance(String from, int resource) {
+
+        UnfreezeBalanceContract unfreeze =
+                UnfreezeBalanceContract.newBuilder()
+                        .setOwnerAddress(TronClient.parseAddress(from))
+                        .setResourceValue(resource)
+                        .build();
+
+        TransactionExtention txnExt = blockingStub.unfreezeBalance2(unfreeze);
+        System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
+        Transaction signedTxn = signTransaction(txnExt);
+
+        System.out.println(signedTxn.toString());
+        TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
+        System.out.println("======== Result ========\n" + ret.toString());
+    }
+
+    public Block getBlockByNum(long blockNum) {
+        NumberMessage.Builder builder = NumberMessage.newBuilder();
+        builder.setNum(blockNum);
+        System.out.println(blockingStub.getBlockByNum(builder.build()));
+        return blockingStub.getBlockByNum(builder.build());
+    }
+
+    public Block getNowBlock() {
+        System.out.println(blockingStub.getNowBlock(EmptyMessage.newBuilder().build()));
+        return blockingStub.getNowBlock(EmptyMessage.newBuilder().build());
+    }
+
+    public NodeInfo getNodeInfo() {
+        System.out.println(blockingStub.getNodeInfo(EmptyMessage.newBuilder().build()));
+        return blockingStub.getNodeInfo(EmptyMessage.newBuilder().build());
+    }
+
+    public NodeList listNodes() {
+        NodeList nodeList = blockingStub.listNodes(EmptyMessage.newBuilder().build());
+        System.out.println(blockingStub.listNodes(EmptyMessage.newBuilder().build()));
+        return nodeList;
+    }
+
+    public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) {
+        NumberMessage.Builder builder = NumberMessage.newBuilder();
+        builder.setNum(blockNum);
+        TransactionInfoList transactionInfoList = blockingStub.getTransactionInfoByBlockNum(builder.build());
+        System.out.println(blockingStub.getTransactionInfoByBlockNum(builder.build()));
+        return transactionInfoList;
+    }
+
+    public TransactionInfo getTransactionInfoById(String txID) {
+        ByteArray byteArray = new ByteArray();
+        ByteString bsTxid = ByteString.copyFrom(byteArray.fromHexString(txID));
+        BytesMessage request = BytesMessage.newBuilder()
+                .setValue(bsTxid)
+                .build();
+        TransactionInfo transactionInfo = blockingStub.getTransactionInfoById(request);
+        System.out.println(blockingStub.getTransactionInfoById(request));
+        return transactionInfo;
+    }
+
+    public Account getAccount(String address) {
+        ByteArray byteArray = new ByteArray();
+        ByteString bsAddress;
+        String regex="^[A-Fa-f0-9]+$";
+        if(address.matches(regex)){
+            //HEX
+            bsAddress = ByteString.copyFrom(byteArray.fromHexString(address));
+        }else{
+            byte[] rawAddress = Base58Check.base58ToBytes(address);
+            bsAddress = ByteString.copyFrom(rawAddress);
+        }
+        AccountAddressMessage account = AccountAddressMessage.newBuilder()
+                .setAddress(bsAddress)
+                .build();
+        System.out.println(blockingStub.getAccount(account));
+        return blockingStub.getAccount(account);
+    }
+
+    public WitnessList listWitnesses() {
+        WitnessList witnessList = blockingStub
+                .listWitnesses(EmptyMessage.newBuilder().build());
+        System.out.println(blockingStub
+                .listWitnesses(EmptyMessage.newBuilder().build()));
+        return witnessList;
+    }
+
+    public boolean voteWitness(String owner, HashMap<String, String> witness){
+        byte[] rawFrom = Base58Check.base58ToBytes(owner);
+        VoteWitnessContract voteWitnessContract = createVoteWitnessContract(rawFrom, witness);
+        TransactionExtention txnExt = blockingStub.voteWitnessAccount2(voteWitnessContract);
+        System.out.println(blockingStub.voteWitnessAccount2(voteWitnessContract));
+
+        System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
+
+        Transaction signedTxn = signTransaction(txnExt);
+
+        System.out.println(signedTxn.toString());
+        TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
+        System.out.println("======== Result ========\n" + ret.toString());
+        return true;
+    }
+
+    public static VoteWitnessContract createVoteWitnessContract(byte[] owner,
+                                                                HashMap<String, String> witness) {
+        VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
+        builder.setOwnerAddress(ByteString.copyFrom(owner));
+        for (String addressBase58 : witness.keySet()) {
+            String value = witness.get(addressBase58);
+            long count = Long.parseLong(value);
+            VoteWitnessContract.Vote.Builder voteBuilder = VoteWitnessContract.Vote.newBuilder();
+            byte[] address = Base58Check.base58ToBytes(addressBase58);
+            if (address == null) {
+                continue;
+            }
+            voteBuilder.setVoteAddress(ByteString.copyFrom(address));
+            voteBuilder.setVoteCount(count);
+            builder.addVotes(voteBuilder.build());
+        }
+
+        return builder.build();
+    }
+
 }

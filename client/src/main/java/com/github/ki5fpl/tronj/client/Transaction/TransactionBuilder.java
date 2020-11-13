@@ -32,14 +32,14 @@ public class TransactionBuilder {
         return this;
     }
 
-    public TransactionBuilder setMemoFromByte(byte[] memo) {
+    public TransactionBuilder setMemo(byte[] memo) {
         transaction.toBuilder()
             .setRawData(transaction.getRawData().toBuilder().setData(ByteString.copyFrom(memo)))
             .build();
         return this;
     }
 
-    public TransactionBuilder setMemoFromString(String memo) {
+    public TransactionBuilder setMemo(String memo) {
         transaction.toBuilder()
             .setRawData(transaction.getRawData().toBuilder().setData(ByteString.copyFromUtf8(memo)))
             .build();

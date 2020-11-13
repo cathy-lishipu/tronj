@@ -125,6 +125,10 @@ public class TronClient {
         return signedTxn;
     }
 
+    public TransactionReturn broadcastTransaction(Transaction txn) {
+        return blockingStub.broadcastTransaction(txn);
+    }
+
     public Transaction signTransaction(TransactionExtention txnExt) {
         return signTransaction(txnExt, keyPair);
     }
@@ -276,9 +280,9 @@ public class TronClient {
 
     /**
      * make a constant call - no broadcasting
-     * @ownerAddr the current caller
-     * @contractAddr smart contract address
-     * @function contract function
+     * @param ownerAddr the current caller
+     * @param contractAddr smart contract address
+     * @param function contract function
      */
     public TransactionExtention constantCall(String ownerAddr, String contractAddr, Function function) throws Exception{
         Contract cntr = getContract(contractAddr);
@@ -291,9 +295,10 @@ public class TronClient {
 
     /**
      * make a trigger call. Trigger call consumes energy and bandwidth.
-     * @ownerAddr the current caller
-     * @contractAddr smart contract address
-     * @function contract function
+     * @param ownerAddr the current caller
+     * @param contractAddr smart contract address
+     * @param function contract function
+     * @return transaction builder. Users may set other fields, e.g. feeLimit
      */
     public TransactionBuilder triggerCall(String ownerAddr, String contractAddr, Function function) throws Exception {
         Contract cntr = getContract(contractAddr);

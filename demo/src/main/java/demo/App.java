@@ -12,6 +12,7 @@ import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint32;
 import com.github.ki5fpl.tronj.client.contract.Contract;
 import com.github.ki5fpl.tronj.client.contract.ContractFunction;
+import com.github.ki5fpl.tronj.client.transaction.TransactionBuilder;
 import com.github.ki5fpl.tronj.client.TronClient;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
 import com.github.ki5fpl.tronj.proto.Contract.TriggerSmartContract;
@@ -150,6 +151,35 @@ public class App {
         }
     }
 
+    /**
+     * This is a trigger call - transfer trc-20 demo
+     */
+    public void triggerCallDemo() {
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            //function 'transfer'
+            //params: function name, function params
+            Function trc20Transfer = new Function("transfer",
+            Arrays.asList(new Address("TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA"),
+                new Uint256(BigInteger.valueOf(10L).multiply(BigInteger.valueOf(10).pow(18)))),
+            Arrays.asList(new TypeReference<Bool>() {}));
+
+            //the params are: owner address, contract address, function
+            TransactionBuilder builder = client.triggerCall("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", "TF17BgPaZYbz8oxbjhriubPDsA7ArKoLX3", trc20Transfer); //JST
+            //set extra params
+            builder.setFeeLimit(100000000L);
+            builder.setMemo("Let's go!");
+            //sign transaction
+            Transaction signedTxn = client.signTransaction(builder.build());
+            System.out.println(signedTxn.toString());
+            //broadcast transaction
+            TransactionReturn ret = client.broadcastTransaction(signedTxn);
+            System.out.println("======== Result ========\n" + ret.toString());
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
 
 
     public static void main(String[] args) {
@@ -162,6 +192,7 @@ public class App {
         // app.sendTrc20Transaction();
         // app.transferTrc20();
         // app.getSmartContract();
-        app.viewContractName();
+        // app.viewContractName();
+        app.triggerCallDemo();
     }
 }

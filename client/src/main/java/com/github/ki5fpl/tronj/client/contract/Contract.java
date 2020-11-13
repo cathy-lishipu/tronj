@@ -4,8 +4,11 @@ import com.google.protobuf.ByteString;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
 import com.github.ki5fpl.tronj.proto.Common.SmartContract;
 import com.github.ki5fpl.tronj.proto.Common.SmartContract.ABI;
+import com.github.ki5fpl.tronj.proto.Common.SmartContract.ABI.Entry;
+import com.github.ki5fpl.tronj.proto.Common.SmartContract.ABI.Entry.Param;
 import com.github.ki5fpl.tronj.proto.Contract.CreateSmartContract;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Contract {
@@ -19,8 +22,9 @@ public class Contract {
     private long originEnergyLimit = 1;
     private ByteString codeHash = ByteString.EMPTY;
     private ByteString trxHash = ByteString.EMPTY;
+    //Current transaction owner's address, to call or trigger contract"
     private ByteString ownerAddr = ByteString.EMPTY;
-    private List<ContractFunction> functions;
+    private List<ContractFunction> functions = new ArrayList();
 
     public Contract(ByteString cntrAddr, ABI abi, ByteString bytecode, long consumeUserResourcePercent, String name, long originEnergyLimit) {
         this.cntrAddr = cntrAddr;
@@ -41,6 +45,7 @@ public class Contract {
         this.name = builder.name;
         this.originEnergyLimit = builder.originEnergyLimit;
         this.ownerAddr = builder.ownerAddr;
+        abiToFunctions();
     }
 
     public ByteString getOriginAddr() {
@@ -131,6 +136,13 @@ public class Contract {
         this.ownerAddr = ownerAddr;
     }
 
+    public List<ContractFunction> getFunctions() {
+        return functions;
+    }
+
+    public void setFunctions(List<ContractFunction> functions) {
+        this.functions = functions;
+    }
 
     //contract builder
     public static class Builder {
@@ -197,7 +209,50 @@ public class Contract {
     }
 
     private void abiToFunctions() {
+        int funcNum = abi.getEntrysCount();
+        for (int i = 0; i < funcNum; i++) {
+            Entry funcAbi = abi.getEntrysList().get(i);
+            if (funcAbi.getTypeValue() == 2) {
+                ContractFunction.Builder builder = new ContractFunction.Builder();
+                builder.setName(funcAbi.getName());
+                builder.setAbi(funcAbi);
+                builder.setCntr(this);
+                builder.setOwnerAddr(this.ownerAddr);
+                //if has input
+                if (0 != funcAbi.getInputsCount()) {
+                    List params = funcAbi.getInputsList();
+                    builder.setInputParams(collectParams(params, 'p'));
+                    builder.setInputTypes(collectParams(params, 't'));
+                }
+                //if has output
+                if (0 != funcAbi.getOutputsCount()) {
+                    List<Param> params = funcAbi.getOutputsList();
+                    if (null != params.get(0).getName()) {
+                        builder.setOutput((String)collectParams(params, 'p').get(0));
+                    }
+                    builder.setOutputType((String)collectParams(params, 't').get(0));
+                }
+                functions.add(builder.build());
+            }
+        }
+    }
 
+    private List<String> collectParams(List<Param> params, char flag) {
+        List<String> ret = new ArrayList();
+        switch (flag) {
+            //p = param, t = type
+            case 'p':
+              for (Param p : params) {
+                  ret.add(p.getName());
+              }
+              break;
+            case 't':
+              for (Param p : params) {
+                  ret.add(p.getType());
+              }
+              break;
+        }
+        return ret;
     }
 
     public SmartContract toProto() {

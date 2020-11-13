@@ -10,6 +10,8 @@ import com.github.ki5fpl.tronj.api.GrpcAPI;
 import com.github.ki5fpl.tronj.api.GrpcAPI.BytesMessage;
 import com.github.ki5fpl.tronj.api.WalletGrpc;
 import com.github.ki5fpl.tronj.client.contract.Contract;
+import com.github.ki5fpl.tronj.client.contract.ContractFunction;
+import com.github.ki5fpl.tronj.client.transaction.TransactionBuilder;
 import com.github.ki5fpl.tronj.crypto.SECP256K1;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
 import com.github.ki5fpl.tronj.proto.Common.SmartContract;
@@ -30,6 +32,7 @@ import org.bouncycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 
 public class TronClient {
     public final WalletGrpc.WalletBlockingStub blockingStub;
@@ -204,6 +207,7 @@ public class TronClient {
 
         TransactionExtention txnExt = blockingStub.triggerContract(trigger);
         System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
+        System.out.println("contsant result :" + txnExt.getConstantResult(0));
 
         Transaction unsignedTxn = txnExt.getTransaction().toBuilder()
             .setRawData(txnExt.getTransaction().getRawData().toBuilder().setFeeLimit(feeLimit))
@@ -240,6 +244,65 @@ public class TronClient {
                 .build();
 
         return contract;
+    }
+
+    private boolean isFuncInContract(Contract cntr, Function function) {
+        List<ContractFunction> functions = cntr.getFunctions();
+        for (int i = 0; i < functions.size(); i++) {
+            if (functions.get(i).getName().equalsIgnoreCase(function.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private TransactionExtention callWithoutBroadcast(String ownerAddr, Contract cntr, Function function) {
+        cntr.setOwnerAddr(parseAddress(ownerAddr));
+            String encodedHex = FunctionEncoder.encode(function);
+            TriggerSmartContract trigger = 
+                TriggerSmartContract.newBuilder()
+                .setOwnerAddress(cntr.getOwnerAddr())
+                .setContractAddress(cntr.getCntrAddr())
+                .setData(parseHex(encodedHex))
+                .build();
+
+            System.out.println("trigger:\n" + trigger);
+
+            TransactionExtention txnExt = blockingStub.triggerConstantContract(trigger);
+            System.out.println("txn id => " + toHex(txnExt.getTxid().toByteArray()));
+
+            return txnExt;
+    }
+
+    /**
+     * make a constant call - no broadcasting
+     * @ownerAddr the current caller
+     * @contractAddr smart contract address
+     * @function contract function
+     */
+    public TransactionExtention constantCall(String ownerAddr, String contractAddr, Function function) throws Exception{
+        Contract cntr = getContract(contractAddr);
+        if (isFuncInContract(cntr, function)) {
+            return callWithoutBroadcast(ownerAddr, cntr, function);
+        } else {
+            throw new RuntimeException("Function not found in the contract");
+        }
+    }
+
+    /**
+     * make a trigger call. Trigger call consumes energy and bandwidth.
+     * @ownerAddr the current caller
+     * @contractAddr smart contract address
+     * @function contract function
+     */
+    public TransactionBuilder triggerCall(String ownerAddr, String contractAddr, Function function) throws Exception {
+        Contract cntr = getContract(contractAddr);
+        if (isFuncInContract(cntr, function)) {
+            TransactionExtention txnExt = callWithoutBroadcast(ownerAddr, cntr, function);
+            return new TransactionBuilder(txnExt.getTransaction());
+        } else {
+            throw new RuntimeException("Function not found in the contract");
+        }
     }
 
 }

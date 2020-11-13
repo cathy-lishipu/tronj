@@ -11,6 +11,7 @@ import com.github.ki5fpl.tronj.abi.datatypes.generated.Bytes10;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint32;
 import com.github.ki5fpl.tronj.client.contract.Contract;
+import com.github.ki5fpl.tronj.client.contract.ContractFunction;
 import com.github.ki5fpl.tronj.client.TronClient;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
 import com.github.ki5fpl.tronj.proto.Contract.TriggerSmartContract;
@@ -123,14 +124,33 @@ public class App {
     public void getSmartContract() {
         TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            //get JST contract
+           
             Contract cntr = client.getContract("THi2qJf6XmvTJSpZHc17HgQsmJop6kb3ia");
             System.out.println("Contract name: " + cntr.getName());
-            System.out.println("Contract ABI: " + cntr.getAbi());
+            // System.out.println("Contract ABI: " + cntr.getAbi());
+            System.out.println("Contract functions: " + cntr.getFunctions().size());
+            for (ContractFunction cf : cntr.getFunctions()) {
+                System.out.println(cf.toString());
+            }
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
     }
+
+    /**
+     * This is a constant call demo
+     */
+    public void viewContractName() {
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            Function viewName = new Function("name", Collections.emptyList(), Collections.emptyList());
+            TransactionExtention txnExt = client.constantCall("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", "TF17BgPaZYbz8oxbjhriubPDsA7ArKoLX3", viewName);
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+
 
     public static void main(String[] args) {
         App app = new App();
@@ -141,6 +161,7 @@ public class App {
         // app.sendTrx();
         // app.sendTrc20Transaction();
         // app.transferTrc20();
-        app.getSmartContract();
+        // app.getSmartContract();
+        app.viewContractName();
     }
 }

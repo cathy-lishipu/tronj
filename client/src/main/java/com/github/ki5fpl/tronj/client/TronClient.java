@@ -49,6 +49,8 @@ import com.github.ki5fpl.tronj.proto.Response.TransactionInfoList;
 import com.github.ki5fpl.tronj.proto.Response.TransactionInfo;
 import com.github.ki5fpl.tronj.proto.Response.Account;
 
+import static com.github.ki5fpl.tronj.proto.Response.TransactionReturn.response_code.SUCCESS;
+
 public class TronClient {
     public final WalletGrpc.WalletBlockingStub blockingStub;
     public final SECP256K1.KeyPair keyPair;
@@ -164,6 +166,10 @@ public class TronClient {
 
         TransactionExtention txnExt = blockingStub.createTransaction2(req);
         System.out.println("txn id => " + Hex.toHexString(txnExt.getTxid().toByteArray()));
+        System.out.println("Code = " + txnExt.getResult().getCode());
+        if(SUCCESS != txnExt.getResult().getCode()){
+            System.out.println("Message = " + txnExt.getResult().getMessage().toStringUtf8());
+        }
 
         Transaction signedTxn = signTransaction(txnExt);
 
@@ -191,6 +197,10 @@ public class TronClient {
 
         TransactionExtention txnExt = blockingStub.transferAsset2(req);
         System.out.println("txn id => " + Hex.toHexString(txnExt.getTxid().toByteArray()));
+        System.out.println("Code = " + txnExt.getResult().getCode());
+        if(SUCCESS != txnExt.getResult().getCode()){
+            System.out.println("Message = " + txnExt.getResult().getMessage().toStringUtf8());
+        }
 
         Transaction signedTxn = signTransaction(txnExt);
 
@@ -214,6 +224,10 @@ public class TronClient {
         System.out.println("freezeBalance => " + freezeBalanceContract.toString());
         TransactionExtention txnExt = blockingStub.freezeBalance2(freezeBalanceContract);
         System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
+        System.out.println("Code = " + txnExt.getResult().getCode());
+        if(SUCCESS != txnExt.getResult().getCode()){
+            System.out.println("Message = " + txnExt.getResult().getMessage().toStringUtf8());
+        }
 
         Transaction signedTxn = signTransaction(txnExt);
 
@@ -232,6 +246,11 @@ public class TronClient {
 
         TransactionExtention txnExt = blockingStub.unfreezeBalance2(unfreeze);
         System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
+        System.out.println("Code = " + txnExt.getResult().getCode());
+        if(SUCCESS != txnExt.getResult().getCode()){
+            System.out.println("Message = " + txnExt.getResult().getMessage().toStringUtf8());
+        }
+
         Transaction signedTxn = signTransaction(txnExt);
 
         System.out.println(signedTxn.toString());
@@ -314,6 +333,10 @@ public class TronClient {
         System.out.println(blockingStub.voteWitnessAccount2(voteWitnessContract));
 
         System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
+        System.out.println("Code = " + txnExt.getResult().getCode());
+        if(SUCCESS != txnExt.getResult().getCode()){
+            System.out.println("Message = " + txnExt.getResult().getMessage().toStringUtf8());
+        }
 
         Transaction signedTxn = signTransaction(txnExt);
 

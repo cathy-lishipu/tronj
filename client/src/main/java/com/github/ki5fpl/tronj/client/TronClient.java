@@ -260,6 +260,13 @@ public class TronClient {
         return false;
     }
 
+    /**
+     * call function without signature and broadcasting
+     * @param ownerAddr the caller
+     * @param cntr the contract
+     * @param function the function called
+     * @return TransactionExtention 
+     */
     private TransactionExtention callWithoutBroadcast(String ownerAddr, Contract cntr, Function function) {
         cntr.setOwnerAddr(parseAddress(ownerAddr));
             String encodedHex = FunctionEncoder.encode(function);
@@ -283,6 +290,7 @@ public class TronClient {
      * @param ownerAddr the current caller
      * @param contractAddr smart contract address
      * @param function contract function
+     * @return TransactionExtention
      */
     public TransactionExtention constantCall(String ownerAddr, String contractAddr, Function function) throws Exception{
         Contract cntr = getContract(contractAddr);

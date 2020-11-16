@@ -226,7 +226,9 @@ public class TronClient {
 
     /**
      * get a smart contract from a contract address
-     * @contractAddress smart contract address
+     * @param contractAddress smart contract address
+     * @return the smart contract obtained from the address
+     * @throws Exception if contract address does not match
      */
     public Contract getContract(String contractAddress) throws Exception{
         ByteString rawAddr = parseAddress(contractAddress);
@@ -250,6 +252,12 @@ public class TronClient {
         return contract;
     }
 
+    /**
+     * Check whether the method is in the contract
+     * @param cntr the smart contract
+     * @param function the smart contract function
+     * @return ture if function exists in the contract
+     */
     private boolean isFuncInContract(Contract cntr, Function function) {
         List<ContractFunction> functions = cntr.getFunctions();
         for (int i = 0; i < functions.size(); i++) {
@@ -291,6 +299,7 @@ public class TronClient {
      * @param contractAddr smart contract address
      * @param function contract function
      * @return TransactionExtention
+     * @throws RuntimeException if function cannot be found in the contract
      */
     public TransactionExtention constantCall(String ownerAddr, String contractAddr, Function function) throws Exception{
         Contract cntr = getContract(contractAddr);
@@ -307,6 +316,7 @@ public class TronClient {
      * @param contractAddr smart contract address
      * @param function contract function
      * @return transaction builder. Users may set other fields, e.g. feeLimit
+     * @throws RuntimeException if function cannot be found in the contract
      */
     public TransactionBuilder triggerCall(String ownerAddr, String contractAddr, Function function) throws Exception {
         Contract cntr = getContract(contractAddr);

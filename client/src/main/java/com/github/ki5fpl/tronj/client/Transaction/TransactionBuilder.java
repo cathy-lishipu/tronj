@@ -1,5 +1,17 @@
 package com.github.ki5fpl.tronj.client.transaction;
 
+/**
+ * The {@code TransactionBuilder} class provides mutator methods
+ * for common used attributes.
+ *
+ * <p>The {@code TransactionBuilder} object are mostly used before signing a
+ * transaction, for setting attributes values like {@link #setFeeLimit}, {@link
+ * #setMemo}, Etc.</p>
+ *
+ * @since jdk13.0.2+8
+ * @see com.github.ki5fpl.tronj.proto.Chain.Transaction;
+ */
+
 import com.google.protobuf.ByteString;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
 

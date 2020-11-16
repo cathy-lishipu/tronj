@@ -144,7 +144,6 @@ public class Contract {
         this.functions = functions;
     }
 
-    //contract builder
     public static class Builder {
         private ByteString originAddr = ByteString.EMPTY;
         private ByteString cntrAddr = ByteString.EMPTY;
@@ -208,7 +207,12 @@ public class Contract {
         }
     }
 
-    private void abiToFunctions() {
+  /**
+   * Convert abi entries to ContractFunction objects
+   * @see com.github.ki5fpl.tronj.proto.Common.SmartContract.ABI.Entry;
+   * @see com.github.ki5fpl.tronj.client.contract.ContractFunction;
+   */
+  private void abiToFunctions() {
         int funcNum = abi.getEntrysCount();
         for (int i = 0; i < funcNum; i++) {
             Entry funcAbi = abi.getEntrysList().get(i);
@@ -255,7 +259,12 @@ public class Contract {
         return ret;
     }
 
-    public SmartContract toProto() {
+  /**
+   * build a SmartContract object
+   * @return SmartContract object
+   * @see com.github.ki5fpl.tronj.proto.Common.SmartContract;
+   */
+  public SmartContract toProto() {
         return SmartContract.newBuilder()
                    .setOriginAddress(originAddr)
                    .setContractAddress(cntrAddr)
@@ -274,6 +283,13 @@ public class Contract {
         return deploy(0, 0);
     }
 
+  /**
+   * create a CreateSmartContract object to get ready for deployment
+   * @param callTokenValue deposit amount while deploying
+   * @param tokenId token id
+   * @return CreateSmartContract object for signing and broadcasting
+   * @see com.github.ki5fpl.tronj.proto.Contract.CreateSmartContract;
+   */
     public CreateSmartContract deploy(long callTokenValue, long tokenId) {
         //throws if deployed
         if (this.cntrAddr.isEmpty()) {

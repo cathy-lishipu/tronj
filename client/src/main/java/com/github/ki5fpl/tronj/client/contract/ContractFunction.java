@@ -1,5 +1,18 @@
 package com.github.ki5fpl.tronj.client.contract;
 
+/**
+ * The class {@code ContractFunction} provides a easier way to access smart contract
+ * functions.
+ *
+ * <p>With a {@code ContractFunction} object, it's easy for users to see the function
+ * declaration and easy to call by construct a {@link
+ * com.github.ki5fpl.tronj.abi.datatypes.Function}</p>
+ *
+ * @since jdk 13.0.2+8
+ * @see com.github.ki5fpl.tronj.abi.datatypes.Function
+ * @see com.github.ki5fpl.tronj.proto.Common.SmartContract
+ */
+
 import com.google.protobuf.ByteString;
 import com.github.ki5fpl.tronj.abi.datatypes.Function;
 import com.github.ki5fpl.tronj.proto.Common.SmartContract.ABI.Entry;

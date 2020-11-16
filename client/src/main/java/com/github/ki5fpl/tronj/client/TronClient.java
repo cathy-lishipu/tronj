@@ -1,5 +1,18 @@
 package com.github.ki5fpl.tronj.client;
 
+/**
+ * A {@code TronClient} object is the entry point for calling the functions.
+ *
+ *<p>A {@code TronClient} object is bind with a private key and a full node.
+ * {@link #broadcastTransaction}, {@link #signTransaction} and other transaction related
+ * operations can be done via a {@code TronClient} object.</p>
+ *
+ * @since jdk13.0.2+8
+ * @see com.github.ki5fpl.tronj.client.contract.Contract
+ * @see com.github.ki5fpl.tronj.proto.Chain.Transaction
+ * @see com.github.ki5fpl.tronj.proto.Contract
+ */
+
 import com.github.ki5fpl.tronj.abi.FunctionEncoder;
 import com.github.ki5fpl.tronj.abi.TypeReference;
 import com.github.ki5fpl.tronj.abi.datatypes.Address;
@@ -225,7 +238,7 @@ public class TronClient {
     }
 
     /**
-     * get a smart contract from a contract address
+     * Obtain a {@code Contract} object via an address
      * @param contractAddress smart contract address
      * @return the smart contract obtained from the address
      * @throws Exception if contract address does not match
@@ -253,10 +266,10 @@ public class TronClient {
     }
 
     /**
-     * Check whether the method is in the contract
-     * @param cntr the smart contract
-     * @param function the smart contract function
-     * @return ture if function exists in the contract
+     * Check whether a given method is in the contract.
+     * @param cntr the smart contract.
+     * @param function the smart contract function.
+     * @return ture if function exists in the contract.
      */
     private boolean isFuncInContract(Contract cntr, Function function) {
         List<ContractFunction> functions = cntr.getFunctions();
@@ -295,11 +308,11 @@ public class TronClient {
 
     /**
      * make a constant call - no broadcasting
-     * @param ownerAddr the current caller
-     * @param contractAddr smart contract address
-     * @param function contract function
-     * @return TransactionExtention
-     * @throws RuntimeException if function cannot be found in the contract
+     * @param ownerAddr the current caller.
+     * @param contractAddr smart contract address.
+     * @param function contract function.
+     * @return TransactionExtention.
+     * @throws RuntimeException if function cannot be found in the contract.
      */
     public TransactionExtention constantCall(String ownerAddr, String contractAddr, Function function) throws Exception{
         Contract cntr = getContract(contractAddr);

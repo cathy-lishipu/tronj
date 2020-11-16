@@ -1,5 +1,20 @@
 package com.github.ki5fpl.tronj.client.contract;
 
+/**
+ * The {@code Contract} class is a wrapper for the {@code SmartContract}
+ * class defined in the .proto file. An object of {@code Contract} contains
+ * same attributes with the {@code SmartContract} class.
+ *
+ * <p>This class provides mutator and accessor methods for all
+ * attributes. Besides, functions of smart contracts are wrapped
+ * and can be easily viewed through {@link
+ * com.github.ki5fpl.tronj.client.contract.ContractFunction#toString()}</>
+ *
+ * @since jdk 13.0.2+8
+ * @see com.github.ki5fpl.tronj.client.contract.ContractFunction
+ * @see com.github.ki5fpl.tronj.proto.Common.SmartContract;
+ */
+
 import com.google.protobuf.ByteString;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
 import com.github.ki5fpl.tronj.proto.Common.SmartContract;
@@ -262,7 +277,6 @@ public class Contract {
   /**
    * build a SmartContract object
    * @return SmartContract object
-   * @see com.github.ki5fpl.tronj.proto.Common.SmartContract;
    */
   public SmartContract toProto() {
         return SmartContract.newBuilder()
@@ -288,7 +302,6 @@ public class Contract {
    * @param callTokenValue deposit amount while deploying
    * @param tokenId token id
    * @return CreateSmartContract object for signing and broadcasting
-   * @see com.github.ki5fpl.tronj.proto.Contract.CreateSmartContract;
    */
     public CreateSmartContract deploy(long callTokenValue, long tokenId) {
         //throws if deployed

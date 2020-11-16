@@ -99,18 +99,21 @@ public class TronClient {
     }
 
     public static ByteString parseAddress(String address) {
+        byte[] raw = new byte[0];
         if (address.startsWith("T")) {
-            byte[] raw = Base58Check.base58ToBytes(address);
-            return ByteString.copyFrom(raw);
+            raw = Base58Check.base58ToBytes(address);
         } else if (address.startsWith("41")) {
-            byte[] raw = Hex.decode(address);
-            return ByteString.copyFrom(raw);
+            raw = Hex.decode(address);
         } else if (address.startsWith("0x")) {
-            byte[] raw = Hex.decode(address.substring(2));
-            return ByteString.copyFrom(raw);
+            raw = Hex.decode(address.substring(2));
         } else {
-            throw new IllegalArgumentException("Invalid address: " + address);
+            try {
+                raw = Hex.decode(address);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid address: " + address);
+            }
         }
+        return ByteString.copyFrom(raw);
     }
 
     public static ByteString parseHex(String hexString) {
@@ -150,16 +153,16 @@ public class TronClient {
         return signTransaction(txn, keyPair);
     }
 
-    public void transfer(String from, String to, long amount) throws Exception {
+    public void transfer(String from, String to, long amount) {
         System.out.println("Transfer from: " + from);
         System.out.println("Transfer to: " + from);
 
-        byte[] rawFrom = Base58Check.base58ToBytes(from);
-        byte[] rawTo = Base58Check.base58ToBytes(to);
+        ByteString rawFrom = parseAddress(from);
+        ByteString rawTo = parseAddress(to);
 
         TransferContract req = TransferContract.newBuilder()
-                .setOwnerAddress(ByteString.copyFrom(rawFrom))
-                .setToAddress(ByteString.copyFrom(rawTo))
+                .setOwnerAddress(rawFrom)
+                .setToAddress(rawTo)
                 .setAmount(amount)
                 .build();
         System.out.println("transfer => " + req.toString());
@@ -178,18 +181,18 @@ public class TronClient {
         System.out.println("======== Result ========\n" + ret.toString());
     }
 
-    public void transferTrc10(String from, String to, int tokenId, long amount) throws Exception {
+    public void transferTrc10(String from, String to, int tokenId, long amount) {
         System.out.println("Transfer from: " + from);
         System.out.println("Transfer to: " + from);
         System.out.println("Token id: " + tokenId);
 
-        byte[] rawFrom = Base58Check.base58ToBytes(from);
-        byte[] rawTo = Base58Check.base58ToBytes(to);
+        ByteString rawFrom = parseAddress(from);
+        ByteString rawTo = parseAddress(to);
         byte[] rawTokenId = Integer.toString(tokenId).getBytes();
 
         TransferAssetContract req = TransferAssetContract.newBuilder()
-                .setOwnerAddress(ByteString.copyFrom(rawFrom))
-                .setToAddress(ByteString.copyFrom(rawTo))
+                .setOwnerAddress(rawFrom)
+                .setToAddress(rawTo)
                 .setAssetName(ByteString.copyFrom(rawTokenId))
                 .setAmount(amount)
                 .build();
@@ -209,17 +212,17 @@ public class TronClient {
         System.out.println("======== Result ========\n" + ret.toString());
     }
 
-    public void freezeBalance(String from, long balance, long duration, int resourceCode, String receive) throws Exception {
+    public void freezeBalance(String from, long balance, long duration, int resourceCode, String receive) {
 
-        byte[] rawFrom = Base58Check.base58ToBytes(from);
-        byte[] rawReceive = Base58Check.base58ToBytes(receive);
+        ByteString rawFrom = parseAddress(from);
+        ByteString rawReceive = parseAddress(receive);
         FreezeBalanceContract freezeBalanceContract=
                 FreezeBalanceContract.newBuilder()
-                        .setOwnerAddress(ByteString.copyFrom(rawFrom))
+                        .setOwnerAddress(rawFrom)
                         .setFrozenBalance(balance)
                         .setFrozenDuration(duration)
                         .setResourceValue(resourceCode)
-                        .setReceiverAddress(ByteString.copyFrom(rawReceive))
+                        .setReceiverAddress(rawReceive)
                         .build();
         System.out.println("freezeBalance => " + freezeBalanceContract.toString());
         TransactionExtention txnExt = blockingStub.freezeBalance2(freezeBalanceContract);
@@ -240,7 +243,7 @@ public class TronClient {
 
         UnfreezeBalanceContract unfreeze =
                 UnfreezeBalanceContract.newBuilder()
-                        .setOwnerAddress(TronClient.parseAddress(from))
+                        .setOwnerAddress(parseAddress(from))
                         .setResourceValue(resource)
                         .build();
 
@@ -290,8 +293,7 @@ public class TronClient {
     }
 
     public TransactionInfo getTransactionInfoById(String txID) {
-        ByteArray byteArray = new ByteArray();
-        ByteString bsTxid = ByteString.copyFrom(byteArray.fromHexString(txID));
+        ByteString bsTxid = parseAddress(txID);
         BytesMessage request = BytesMessage.newBuilder()
                 .setValue(bsTxid)
                 .build();
@@ -301,16 +303,7 @@ public class TronClient {
     }
 
     public Account getAccount(String address) {
-        ByteArray byteArray = new ByteArray();
-        ByteString bsAddress;
-        String regex="^[A-Fa-f0-9]+$";
-        if(address.matches(regex)){
-            //HEX
-            bsAddress = ByteString.copyFrom(byteArray.fromHexString(address));
-        }else{
-            byte[] rawAddress = Base58Check.base58ToBytes(address);
-            bsAddress = ByteString.copyFrom(rawAddress);
-        }
+        ByteString bsAddress = parseAddress(address);
         AccountAddressMessage account = AccountAddressMessage.newBuilder()
                 .setAddress(bsAddress)
                 .build();
@@ -326,12 +319,10 @@ public class TronClient {
         return witnessList;
     }
 
-    public boolean voteWitness(String owner, HashMap<String, String> witness){
-        byte[] rawFrom = Base58Check.base58ToBytes(owner);
+    public boolean voteWitness(String owner, HashMap<String, String> witness) {
+        ByteString rawFrom = parseAddress(owner);
         VoteWitnessContract voteWitnessContract = createVoteWitnessContract(rawFrom, witness);
         TransactionExtention txnExt = blockingStub.voteWitnessAccount2(voteWitnessContract);
-        System.out.println(blockingStub.voteWitnessAccount2(voteWitnessContract));
-
         System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
         System.out.println("Code = " + txnExt.getResult().getCode());
         if(SUCCESS != txnExt.getResult().getCode()){
@@ -346,19 +337,19 @@ public class TronClient {
         return true;
     }
 
-    public static VoteWitnessContract createVoteWitnessContract(byte[] owner,
+    public static VoteWitnessContract createVoteWitnessContract(ByteString owner,
                                                                 HashMap<String, String> witness) {
         VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
-        builder.setOwnerAddress(ByteString.copyFrom(owner));
+        builder.setOwnerAddress(owner);
         for (String addressBase58 : witness.keySet()) {
             String value = witness.get(addressBase58);
             long count = Long.parseLong(value);
             VoteWitnessContract.Vote.Builder voteBuilder = VoteWitnessContract.Vote.newBuilder();
-            byte[] address = Base58Check.base58ToBytes(addressBase58);
+            ByteString address = parseAddress(addressBase58);
             if (address == null) {
                 continue;
             }
-            voteBuilder.setVoteAddress(ByteString.copyFrom(address));
+            voteBuilder.setVoteAddress(address);
             voteBuilder.setVoteCount(count);
             builder.addVotes(voteBuilder.build());
         }

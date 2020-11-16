@@ -148,9 +148,9 @@ public class App {
 
     public void getTransactionInfoById(){
         System.out.println("============= getTransactionInfoById =============");
-        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            client.getTransactionInfoById("b412408cc57fb7acf3bdedb2b1ad96a5d1ca46367825725c4d0a75ce9eb2879b");
+            client.getTransactionInfoById("-aeae4cfa252b72566e7c77a6274d35c3a1526804215f949c46bbea06e252d8de");
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
@@ -160,7 +160,7 @@ public class App {
         System.out.println("============= getAccount =============");
         TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            client.getAccount("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8");
+            client.getAccount("415CBDD86A2FA8DC4BDDD8A8F69DBA48572EEC07FB");
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
@@ -180,7 +180,7 @@ public class App {
         System.out.println("============= voteWitness =============");
         TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         HashMap<String, String> witness = new HashMap<>();
-        witness.put("TXyZjVcYurrbE43b2MfMtN34uA3tJL85zy","1");
+        witness.put("41F16412B9A17EE9408646E2A21E16478F72ED1E95","1");
         try {
             client.voteWitness("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8",witness);
         } catch (Exception e) {
@@ -204,7 +204,7 @@ public class App {
 //        app.listNodes();
 //        app.getTransactionInfoByBlockNum();
         app.getTransactionInfoById();
-        app.getAccount();
+//        app.getAccount();
 //        app.listWitnesses();
 //        app.voteWitness();
     }

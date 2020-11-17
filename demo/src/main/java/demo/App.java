@@ -147,6 +147,7 @@ public class App {
         } catch (Exception e) {
            System.out.println("error: " + e);
         }
+    }
           
     // public void sendTrc20Transaction() {
     //     System.out.println("============ TRC20 transfer =============");
@@ -220,6 +221,7 @@ public class App {
           } catch (Exception e) {
             System.out.println("error: " + e);
         }
+    }
 
     /**
      * This is a constant call demo
@@ -262,6 +264,10 @@ public class App {
         witness.put("41F16412B9A17EE9408646E2A21E16478F72ED1E95","1");
         try {
             client.voteWitness("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8",witness);
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
 
     /**
      * This is a trigger call - transfer trc-20 demo

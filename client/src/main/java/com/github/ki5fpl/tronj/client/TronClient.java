@@ -15,17 +15,12 @@ package com.github.ki5fpl.tronj.client;
  */
 
 import com.github.ki5fpl.tronj.abi.TypeReference;
-import com.github.ki5fpl.tronj.abi.Utils;
 import com.github.ki5fpl.tronj.abi.datatypes.Address;
 import com.github.ki5fpl.tronj.abi.datatypes.Bool;
-import com.github.ki5fpl.tronj.abi.datatypes.Int;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
 
 
 import com.github.ki5fpl.tronj.abi.FunctionEncoder;
-import com.github.ki5fpl.tronj.abi.TypeReference;
-import com.github.ki5fpl.tronj.abi.datatypes.Address;
-import com.github.ki5fpl.tronj.abi.datatypes.Bool;
 import com.github.ki5fpl.tronj.abi.datatypes.Function;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
 import com.github.ki5fpl.tronj.api.GrpcAPI;
@@ -47,11 +42,8 @@ import com.github.ki5fpl.tronj.proto.Contract.TriggerSmartContract;
 import com.github.ki5fpl.tronj.proto.Contract.UnfreezeBalanceContract;
 import com.github.ki5fpl.tronj.proto.Contract.FreezeBalanceContract;
 import com.github.ki5fpl.tronj.proto.Contract.TransferContract;
-
 import com.github.ki5fpl.tronj.proto.Contract.VoteWitnessContract;
-
 import com.github.ki5fpl.tronj.proto.Contract.TriggerSmartContract;
-
 import com.github.ki5fpl.tronj.proto.Response.TransactionExtention;
 import com.github.ki5fpl.tronj.proto.Response.TransactionReturn;
 import com.github.ki5fpl.tronj.proto.Response.NodeInfo;
@@ -66,14 +58,9 @@ import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
-import io.grpc.StatusRuntimeException;
-
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
@@ -88,8 +75,6 @@ import com.github.ki5fpl.tronj.proto.Response.Account;
 
 import static com.github.ki5fpl.tronj.proto.Response.TransactionReturn.response_code.SUCCESS;
 
-import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 
 public class TronClient {
@@ -401,6 +386,7 @@ public class TronClient {
         }
 
         return builder.build();
+    }
 
     public void transferTrc20(String from, String to, String cntr, long feeLimit, long amount, int precision) throws Exception {
         System.out.println("============ TRC20 transfer =============");

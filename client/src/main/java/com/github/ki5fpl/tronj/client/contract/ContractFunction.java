@@ -14,7 +14,6 @@ package com.github.ki5fpl.tronj.client.contract;
  */
 
 import com.google.protobuf.ByteString;
-import com.github.ki5fpl.tronj.abi.datatypes.Function;
 import com.github.ki5fpl.tronj.proto.Common.SmartContract.ABI.Entry;
 
 import java.lang.StringBuilder;

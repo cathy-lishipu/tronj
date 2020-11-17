@@ -10,6 +10,9 @@ import com.github.ki5fpl.tronj.abi.datatypes.*;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Bytes10;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint32;
+import com.github.ki5fpl.tronj.client.contract.Contract;
+import com.github.ki5fpl.tronj.client.contract.ContractFunction;
+import com.github.ki5fpl.tronj.client.transaction.TransactionBuilder;
 import com.github.ki5fpl.tronj.client.TronClient;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
 import com.github.ki5fpl.tronj.proto.Contract.TriggerSmartContract;
@@ -142,6 +145,69 @@ public class App {
         try {
             client.getTransactionInfoByBlockNum(10530140);
         } catch (Exception e) {
+           System.out.println("error: " + e);
+        }
+          
+    // public void sendTrc20Transaction() {
+    //     System.out.println("============ TRC20 transfer =============");
+    //     // Any of `ofShasta`, `ofMainnet`.
+    //     TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+
+    //     // transfer(address _to,uint256 _amount) returns (bool)
+    //     // _to = TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA
+    //     // _amount = 10 * 10^18
+    //     Function trc20Transfer = new Function("transfer",
+    //         Arrays.asList(new Address("TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA"),
+    //             new Uint256(BigInteger.valueOf(10).multiply(BigInteger.valueOf(10).pow(18)))),
+    //         Arrays.asList(new TypeReference<Bool>() {}));
+
+    //     String encodedHex = FunctionEncoder.encode(trc20Transfer);
+    //     TriggerSmartContract trigger =
+    //         TriggerSmartContract.newBuilder()
+    //             .setOwnerAddress(TronClient.parseAddress("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8"))
+    //             .setContractAddress(TronClient.parseAddress("TF17BgPaZYbz8oxbjhriubPDsA7ArKoLX3")) // JST
+    //             .setData(TronClient.parseHex(encodedHex))
+    //             .build();
+
+    //     System.out.println("trigger:\n" + trigger);
+
+    //     TransactionExtention txnExt = client.blockingStub.triggerContract(trigger);
+    //     System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
+
+    //     Transaction unsignedTxn = txnExt.getTransaction.toBuilder()
+    //         .setRawData(txnExt.getTransaction().getRawData().toBuilder().setFeeLimit(10000000L))
+    //         .build();
+
+    //     Transaction signedTxn = client.signTransaction(unsignedTxn);
+
+    //     System.out.println(signedTxn.toString());
+    //     TransactionReturn ret = client.blockingStub.broadcastTransaction(signedTxn);
+    //     System.out.println("======== Result ========\n" + ret.toString());
+    // }
+
+    public void transferTrc20() {
+        // Any of `ofShasta`, `ofMainnet`.
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            //JST transfer
+            client.transferTrc20("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", "TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA", "TF17BgPaZYbz8oxbjhriubPDsA7ArKoLX3", 1000000000L, 10L, 18);
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void getSmartContract() {
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+           
+            Contract cntr = client.getContract("THi2qJf6XmvTJSpZHc17HgQsmJop6kb3ia");
+            System.out.println("Contract name: " + cntr.getName());
+            // System.out.println("Contract ABI: " + cntr.getAbi());
+            System.out.println("Contract functions: " + cntr.getFunctions().size());
+            for (ContractFunction cf : cntr.getFunctions()) {
+                System.out.println(cf.toString());
+            }
+        } catch (Exception e) {
             System.out.println("error: " + e);
         }
     }
@@ -151,10 +217,23 @@ public class App {
         TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         try {
             client.getTransactionInfoById("-aeae4cfa252b72566e7c77a6274d35c3a1526804215f949c46bbea06e252d8de");
+          } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+
+    /**
+     * This is a constant call demo
+     */
+    public void viewContractName() {
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            Function viewName = new Function("name", Collections.emptyList(), Collections.emptyList());
+            TransactionExtention txnExt = client.constantCall("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", "TF17BgPaZYbz8oxbjhriubPDsA7ArKoLX3", viewName);
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
     }
+
 
     public void getAccount(){
         System.out.println("============= getAccount =============");
@@ -183,6 +262,31 @@ public class App {
         witness.put("41F16412B9A17EE9408646E2A21E16478F72ED1E95","1");
         try {
             client.voteWitness("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8",witness);
+
+    /**
+     * This is a trigger call - transfer trc-20 demo
+     */
+    public void triggerCallDemo() {
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            //function 'transfer'
+            //params: function name, function params
+            Function trc20Transfer = new Function("transfer",
+            Arrays.asList(new Address("TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA"),
+                new Uint256(BigInteger.valueOf(10L).multiply(BigInteger.valueOf(10).pow(18)))),
+            Arrays.asList(new TypeReference<Bool>() {}));
+
+            //the params are: owner address, contract address, function
+            TransactionBuilder builder = client.triggerCall("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", "TF17BgPaZYbz8oxbjhriubPDsA7ArKoLX3", trc20Transfer); //JST
+            //set extra params
+            builder.setFeeLimit(100000000L);
+            builder.setMemo("Let's go!");
+            //sign transaction
+            Transaction signedTxn = client.signTransaction(builder.build());
+            System.out.println(signedTxn.toString());
+            //broadcast transaction
+            TransactionReturn ret = client.broadcastTransaction(signedTxn);
+            System.out.println("======== Result ========\n" + ret.toString());
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
@@ -207,5 +311,9 @@ public class App {
 //        app.getAccount();
 //        app.listWitnesses();
 //        app.voteWitness();
+      // app.transferTrc20();
+        // app.getSmartContract();
+        // app.viewContractName();
+        app.triggerCallDemo();
     }
 }

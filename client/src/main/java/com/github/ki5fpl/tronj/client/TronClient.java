@@ -1,22 +1,57 @@
 package com.github.ki5fpl.tronj.client;
 
+
+/**
+ * A {@code TronClient} object is the entry point for calling the functions.
+ *
+ *<p>A {@code TronClient} object is bind with a private key and a full node.
+ * {@link #broadcastTransaction}, {@link #signTransaction} and other transaction related
+ * operations can be done via a {@code TronClient} object.</p>
+ *
+ * @since jdk13.0.2+8
+ * @see com.github.ki5fpl.tronj.client.contract.Contract
+ * @see com.github.ki5fpl.tronj.proto.Chain.Transaction
+ * @see com.github.ki5fpl.tronj.proto.Contract
+ */
+
 import com.github.ki5fpl.tronj.abi.TypeReference;
 import com.github.ki5fpl.tronj.abi.Utils;
 import com.github.ki5fpl.tronj.abi.datatypes.Address;
 import com.github.ki5fpl.tronj.abi.datatypes.Bool;
-import com.github.ki5fpl.tronj.abi.datatypes.Function;
 import com.github.ki5fpl.tronj.abi.datatypes.Int;
 import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
+
+
+import com.github.ki5fpl.tronj.abi.FunctionEncoder;
+import com.github.ki5fpl.tronj.abi.TypeReference;
+import com.github.ki5fpl.tronj.abi.datatypes.Address;
+import com.github.ki5fpl.tronj.abi.datatypes.Bool;
+import com.github.ki5fpl.tronj.abi.datatypes.Function;
+import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
+import com.github.ki5fpl.tronj.api.GrpcAPI;
+import com.github.ki5fpl.tronj.api.GrpcAPI.BytesMessage;
+
 import com.github.ki5fpl.tronj.api.WalletGrpc;
+import com.github.ki5fpl.tronj.client.contract.Contract;
+import com.github.ki5fpl.tronj.client.contract.ContractFunction;
+import com.github.ki5fpl.tronj.client.transaction.TransactionBuilder;
 import com.github.ki5fpl.tronj.crypto.SECP256K1;
 import com.github.ki5fpl.tronj.proto.Chain.Transaction;
+
 import com.github.ki5fpl.tronj.proto.Chain.Block;
+
+import com.github.ki5fpl.tronj.proto.Common.SmartContract;
+
 import com.github.ki5fpl.tronj.proto.Contract.TransferAssetContract;
 import com.github.ki5fpl.tronj.proto.Contract.TriggerSmartContract;
 import com.github.ki5fpl.tronj.proto.Contract.UnfreezeBalanceContract;
 import com.github.ki5fpl.tronj.proto.Contract.FreezeBalanceContract;
 import com.github.ki5fpl.tronj.proto.Contract.TransferContract;
+
 import com.github.ki5fpl.tronj.proto.Contract.VoteWitnessContract;
+
+import com.github.ki5fpl.tronj.proto.Contract.TriggerSmartContract;
+
 import com.github.ki5fpl.tronj.proto.Response.TransactionExtention;
 import com.github.ki5fpl.tronj.proto.Response.TransactionReturn;
 import com.github.ki5fpl.tronj.proto.Response.NodeInfo;
@@ -30,6 +65,7 @@ import com.google.protobuf.ByteString;
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+
 import io.grpc.StatusRuntimeException;
 
 import java.io.IOException;
@@ -38,6 +74,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
 import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.bouncycastle.jcajce.provider.digest.SHA256;
@@ -50,6 +87,10 @@ import com.github.ki5fpl.tronj.proto.Response.TransactionInfo;
 import com.github.ki5fpl.tronj.proto.Response.Account;
 
 import static com.github.ki5fpl.tronj.proto.Response.TransactionReturn.response_code.SUCCESS;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
 
 public class TronClient {
     public final WalletGrpc.WalletBlockingStub blockingStub;
@@ -143,6 +184,10 @@ public class TronClient {
         SECP256K1.Signature sig = SECP256K1.sign(Bytes32.wrap(txid), kp);
         Transaction signedTxn = txn.toBuilder().addSignature(ByteString.copyFrom(sig.encodedBytes().toArray())).build();
         return signedTxn;
+    }
+
+    public TransactionReturn broadcastTransaction(Transaction txn) {
+        return blockingStub.broadcastTransaction(txn);
     }
 
     public Transaction signTransaction(TransactionExtention txnExt) {
@@ -337,6 +382,7 @@ public class TronClient {
         return true;
     }
 
+
     public static VoteWitnessContract createVoteWitnessContract(ByteString owner,
                                                                 HashMap<String, String> witness) {
         VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
@@ -355,6 +401,145 @@ public class TronClient {
         }
 
         return builder.build();
+
+    public void transferTrc20(String from, String to, String cntr, long feeLimit, long amount, int precision) throws Exception {
+        System.out.println("============ TRC20 transfer =============");
+
+        // transfer(address _to,uint256 _amount) returns (bool)
+        // _to = TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA
+        // _amount = 10 * 10^18
+        Function trc20Transfer = new Function("transfer",
+            Arrays.asList(new Address(to),
+                new Uint256(BigInteger.valueOf(amount).multiply(BigInteger.valueOf(10).pow(precision)))),
+            Arrays.asList(new TypeReference<Bool>() {}));
+
+        String encodedHex = FunctionEncoder.encode(trc20Transfer);
+        TriggerSmartContract trigger =
+            TriggerSmartContract.newBuilder()
+                .setOwnerAddress(TronClient.parseAddress(from))
+                .setContractAddress(TronClient.parseAddress(cntr)) // JST
+                .setData(TronClient.parseHex(encodedHex))
+                .build();
+
+        System.out.println("trigger:\n" + trigger);
+
+        TransactionExtention txnExt = blockingStub.triggerContract(trigger);
+        System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
+        System.out.println("contsant result :" + txnExt.getConstantResult(0));
+
+        Transaction unsignedTxn = txnExt.getTransaction().toBuilder()
+            .setRawData(txnExt.getTransaction().getRawData().toBuilder().setFeeLimit(feeLimit))
+            .build();
+
+        Transaction signedTxn = signTransaction(unsignedTxn);
+
+        System.out.println(signedTxn.toString());
+        TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
+        System.out.println("======== Result ========\n" + ret.toString());
+    }
+
+    /**
+     * Obtain a {@code Contract} object via an address
+     * @param contractAddress smart contract address
+     * @return the smart contract obtained from the address
+     * @throws Exception if contract address does not match
+     */
+    public Contract getContract(String contractAddress) throws Exception{
+        ByteString rawAddr = parseAddress(contractAddress);
+        BytesMessage param = 
+            BytesMessage.newBuilder()
+            .setValue(rawAddr)
+            .build();
+        
+            SmartContract cntr = blockingStub.getContract(param);
+
+            Contract contract = 
+                new Contract.Builder()
+                .setCntrAddr(cntr.getContractAddress())
+                .setBytecode(cntr.getBytecode())
+                .setName(cntr.getName())
+                .setAbi(cntr.getAbi())
+                .setOriginEnergyLimit(cntr.getOriginEnergyLimit())
+                .setConsumeUserResourcePercent(cntr.getConsumeUserResourcePercent())
+                .build();
+
+        return contract;
+    }
+
+    /**
+     * Check whether a given method is in the contract.
+     * @param cntr the smart contract.
+     * @param function the smart contract function.
+     * @return ture if function exists in the contract.
+     */
+    private boolean isFuncInContract(Contract cntr, Function function) {
+        List<ContractFunction> functions = cntr.getFunctions();
+        for (int i = 0; i < functions.size(); i++) {
+            if (functions.get(i).getName().equalsIgnoreCase(function.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * call function without signature and broadcasting
+     * @param ownerAddr the caller
+     * @param cntr the contract
+     * @param function the function called
+     * @return TransactionExtention 
+     */
+    private TransactionExtention callWithoutBroadcast(String ownerAddr, Contract cntr, Function function) {
+        cntr.setOwnerAddr(parseAddress(ownerAddr));
+            String encodedHex = FunctionEncoder.encode(function);
+            TriggerSmartContract trigger = 
+                TriggerSmartContract.newBuilder()
+                .setOwnerAddress(cntr.getOwnerAddr())
+                .setContractAddress(cntr.getCntrAddr())
+                .setData(parseHex(encodedHex))
+                .build();
+
+            System.out.println("trigger:\n" + trigger);
+
+            TransactionExtention txnExt = blockingStub.triggerConstantContract(trigger);
+            System.out.println("txn id => " + toHex(txnExt.getTxid().toByteArray()));
+
+            return txnExt;
+    }
+
+    /**
+     * make a constant call - no broadcasting
+     * @param ownerAddr the current caller.
+     * @param contractAddr smart contract address.
+     * @param function contract function.
+     * @return TransactionExtention.
+     * @throws RuntimeException if function cannot be found in the contract.
+     */
+    public TransactionExtention constantCall(String ownerAddr, String contractAddr, Function function) throws Exception{
+        Contract cntr = getContract(contractAddr);
+        if (isFuncInContract(cntr, function)) {
+            return callWithoutBroadcast(ownerAddr, cntr, function);
+        } else {
+            throw new RuntimeException("Function not found in the contract");
+        }
+    }
+
+    /**
+     * make a trigger call. Trigger call consumes energy and bandwidth.
+     * @param ownerAddr the current caller
+     * @param contractAddr smart contract address
+     * @param function contract function
+     * @return transaction builder. Users may set other fields, e.g. feeLimit
+     * @throws RuntimeException if function cannot be found in the contract
+     */
+    public TransactionBuilder triggerCall(String ownerAddr, String contractAddr, Function function) throws Exception {
+        Contract cntr = getContract(contractAddr);
+        if (isFuncInContract(cntr, function)) {
+            TransactionExtention txnExt = callWithoutBroadcast(ownerAddr, cntr, function);
+            return new TransactionBuilder(txnExt.getTransaction());
+        } else {
+            throw new RuntimeException("Function not found in the contract");
+        }
     }
 
 }

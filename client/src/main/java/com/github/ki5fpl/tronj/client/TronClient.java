@@ -279,7 +279,7 @@ public class TronClient {
      * @param from owner address
      * @param balance frozen balance
      * @param duration frozen duration
-     * @param resourceCode Resource type, can be "ENERGY" or "BANDWIDTH"
+     * @param resourceCode Resource type, can be 0("BANDWIDTH") or 1("ENERGY")
      * @return TransactionReturn
      */
     public TransactionReturn freezeBalance(String from, long balance, long duration, int resourceCode) {

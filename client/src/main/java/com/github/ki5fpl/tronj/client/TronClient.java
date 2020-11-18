@@ -153,7 +153,14 @@ public class TronClient {
         return signTransaction(txn, keyPair);
     }
 
-    public void transfer(String from, String to, long amount) {
+    /**
+     * Transfer TRX. amount in SUN
+     * @param from owner address
+     * @param to receive balance
+     * @param amount transfer amount
+     * @return TransactionReturn
+     */
+    public TransactionReturn transfer(String from, String to, long amount) {
         System.out.println("Transfer from: " + from);
         System.out.println("Transfer to: " + from);
 
@@ -179,9 +186,18 @@ public class TronClient {
         System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
         System.out.println("======== Result ========\n" + ret.toString());
+        return ret;
     }
 
-    public void transferTrc10(String from, String to, int tokenId, long amount) {
+    /**
+     * Transfers TRC10 Asset
+     * @param from owner address
+     * @param to receive balance
+     * @param tokenId asset name
+     * @param amount transfer amount
+     * @return TransactionReturn
+     */
+    public TransactionReturn transferTrc10(String from, String to, int tokenId, long amount) {
         System.out.println("Transfer from: " + from);
         System.out.println("Transfer to: " + from);
         System.out.println("Token id: " + tokenId);
@@ -210,19 +226,26 @@ public class TronClient {
         System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
         System.out.println("======== Result ========\n" + ret.toString());
+        return ret;
     }
 
-    public void freezeBalance(String from, long balance, long duration, int resourceCode, String receive) {
+    /**
+     * Freeze balance to get energy or bandwidth, for 3 days
+     * @param from owner address
+     * @param balance frozen balance
+     * @param duration frozen duration
+     * @param resourceCode Resource type, can be "ENERGY" or "BANDWIDTH"
+     * @return TransactionReturn
+     */
+    public TransactionReturn freezeBalance(String from, long balance, long duration, int resourceCode) {
 
         ByteString rawFrom = parseAddress(from);
-        ByteString rawReceive = parseAddress(receive);
         FreezeBalanceContract freezeBalanceContract=
                 FreezeBalanceContract.newBuilder()
                         .setOwnerAddress(rawFrom)
                         .setFrozenBalance(balance)
                         .setFrozenDuration(duration)
                         .setResourceValue(resourceCode)
-                        .setReceiverAddress(rawReceive)
                         .build();
         System.out.println("freezeBalance => " + freezeBalanceContract.toString());
         TransactionExtention txnExt = blockingStub.freezeBalance2(freezeBalanceContract);
@@ -237,9 +260,10 @@ public class TronClient {
         System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
         System.out.println("======== Result ========\n" + ret.toString());
+        return ret;
     }
 
-    public void unfreezeBalance(String from, int resource) {
+    public TransactionReturn unfreezeBalance(String from, int resource) {
 
         UnfreezeBalanceContract unfreeze =
                 UnfreezeBalanceContract.newBuilder()
@@ -259,6 +283,7 @@ public class TronClient {
         System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
         System.out.println("======== Result ========\n" + ret.toString());
+        return ret;
     }
 
     public Block getBlockByNum(long blockNum) {
@@ -319,7 +344,13 @@ public class TronClient {
         return witnessList;
     }
 
-    public boolean voteWitness(String owner, HashMap<String, String> witness) {
+    /**
+     * Vote for witnesses
+     * @param owner owner address
+     * @param witness <witness address, vote count>
+     * @return TransactionReturn
+     */
+    public TransactionReturn voteWitness(String owner, HashMap<String, String> witness) {
         ByteString rawFrom = parseAddress(owner);
         VoteWitnessContract voteWitnessContract = createVoteWitnessContract(rawFrom, witness);
         TransactionExtention txnExt = blockingStub.voteWitnessAccount2(voteWitnessContract);
@@ -334,7 +365,7 @@ public class TronClient {
         System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
         System.out.println("======== Result ========\n" + ret.toString());
-        return true;
+        return ret;
     }
 
     public static VoteWitnessContract createVoteWitnessContract(ByteString owner,

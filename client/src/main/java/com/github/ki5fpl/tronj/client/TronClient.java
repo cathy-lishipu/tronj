@@ -430,8 +430,8 @@ public class TronClient {
             voteBuilder.setVoteCount(count);
             builder.addVotes(voteBuilder.build());
         }
-
         return builder.build();
+    }
 
     public void transferTrc20(String from, String to, String cntr, long feeLimit, long amount, int precision) throws Exception {
         System.out.println("============ TRC20 transfer =============");

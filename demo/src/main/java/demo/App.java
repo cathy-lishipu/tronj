@@ -81,7 +81,7 @@ public class App {
         System.out.println("============= freeze balance =============");
         TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            client.freezeBalance("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", 1_000_000L, 3L,1, "TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA");
+            client.freezeBalance("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", 1_000_000L, 3L,1);
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
@@ -145,8 +145,9 @@ public class App {
         try {
             client.getTransactionInfoByBlockNum(10530140);
         } catch (Exception e) {
-           System.out.println("error: " + e);
+            System.out.println("error: " + e);
         }
+    }
           
     // public void sendTrc20Transaction() {
     //     System.out.println("============ TRC20 transfer =============");
@@ -212,14 +213,15 @@ public class App {
         }
     }
 
-    public void getTransactionInfoById(){
+    public void getTransactionInfoById() {
         System.out.println("============= getTransactionInfoById =============");
         TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         try {
             client.getTransactionInfoById("-aeae4cfa252b72566e7c77a6274d35c3a1526804215f949c46bbea06e252d8de");
-          } catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("error: " + e);
         }
+    }
 
     /**
      * This is a constant call demo
@@ -261,7 +263,11 @@ public class App {
         HashMap<String, String> witness = new HashMap<>();
         witness.put("41F16412B9A17EE9408646E2A21E16478F72ED1E95","1");
         try {
-            client.voteWitness("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8",witness);
+            client.voteWitness("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", witness);
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
 
     /**
      * This is a trigger call - transfer trc-20 demo

@@ -21,7 +21,7 @@ public abstract class StaticArray<T extends Type> extends Array<T> {
 
     /**
      * Warning: increasing this constant will cause more generated StaticArrayN types, see:
-     * com.github.ki5fpl.tronj.codegen.AbiTypesGenerator#generateStaticArrayTypes
+     * org.tron.tronj.codegen.AbiTypesGenerator#generateStaticArrayTypes
      */
     public static final int MAX_SIZE_OF_STATIC_ARRAY = 32;
 

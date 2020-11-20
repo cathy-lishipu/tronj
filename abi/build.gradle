@@ -32,8 +32,8 @@ bintray {
         name = 'abi'
         // configurations = ['archives']
         desc = description
-        websiteUrl = 'https://github.com/ki5fpl/tronj'
-        vcsUrl = 'https://github.com/ki5fpl/tronj.git'
+        websiteUrl = 'https://github.com/Starsakary/tronj'
+        vcsUrl = 'https://github.com/Starsakary/tronj.git'
         licenses = ['Apache-2.0']
         publish = true
         publicDownloadNumbers = true

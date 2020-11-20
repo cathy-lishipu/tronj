@@ -51,11 +51,11 @@ Refer `demo` project.
 import java.math.BigInteger;
 import java.util.*;
 
-import com.github.ki5fpl.tronj.abi.FunctionEncoder;
+import FunctionEncoder;
 import com.github.ki5fpl.tronj.abi.datatypes.*;
-import com.github.ki5fpl.tronj.abi.datatypes.generated.Bytes10;
-import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint256;
-import com.github.ki5fpl.tronj.abi.datatypes.generated.Uint32;
+import Bytes10;
+import Uint256;
+import Uint32;
 */
 
 

@@ -9,6 +9,7 @@ import org.tron.tronj.abi.TypeReference;
 import org.tron.tronj.abi.datatypes.generated.Bytes10;
 import org.tron.tronj.abi.datatypes.generated.Uint256;
 import org.tron.tronj.abi.datatypes.generated.Uint32;
+import org.tron.tronj.abi.datatypes.*;
 import org.tron.tronj.client.contract.Contract;
 import org.tron.tronj.client.contract.ContractFunction;
 import org.tron.tronj.client.transaction.TransactionBuilder;

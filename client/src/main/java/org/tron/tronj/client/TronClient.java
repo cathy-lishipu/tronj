@@ -166,8 +166,47 @@ public class TronClient {
         return signedTxn;
     }
 
-    public TransactionReturn broadcastTransaction(Transaction txn) {
-        return blockingStub.broadcastTransaction(txn);
+    private String resolveResultCode(int code) {
+        String responseCode = "";
+        switch (code) {
+            case 0:
+                responseCode = "SUCCESS";
+            case 1:
+                responseCode = "SIGERROR";
+            case 2:
+                responseCode = "CONTRACT_VALIDATE_ERROR";
+            case 3:
+                responseCode = "CONTRACT_EXE_ERROR";
+            case 4:
+                responseCode = "BANDWITH_ERROR";
+            case 5:
+                responseCode = "DUP_TRANSACTION_ERROR";
+            case 6:
+                responseCode = "TAPOS_ERROR";
+            case 7:
+                responseCode = "TOO_BIG_TRANSACTION_ERROR";
+            case 8:
+                responseCode = "TRANSACTION_EXPIRATION_ERROR";
+            case 9:
+                responseCode = "SERVER_BUSY";
+            case 10:
+                responseCode = "NO_CONNECTION";
+            case 11:
+                responseCode = "NOT_ENOUGH_EFFECTIVE_CONNECTION";
+            case 20:
+                responseCode = "OTHER_ERROR";
+        }
+        return responseCode;
+    }
+
+    public TransactionReturn broadcastTransaction(Transaction txn) throws RuntimeException{
+        TransactionReturn ret = blockingStub.broadcastTransaction(txn);
+        if (!ret.getResult()) {
+            String message = resolveResultCode(ret.getCodeValue()) + ", " + ret.getMessage();
+            throw new RuntimeException(message);
+        } else {
+            return ret;
+        }     
     }
 
     public Transaction signTransaction(TransactionExtention txnExt) {

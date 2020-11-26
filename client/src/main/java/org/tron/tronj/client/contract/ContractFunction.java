@@ -14,7 +14,7 @@ package org.tron.tronj.client.contract;
  */
 
 import com.google.protobuf.ByteString;
-import com.github.ki5fpl.tronj.proto.Common.SmartContract.ABI.Entry;
+import org.tron.tronj.proto.Common.SmartContract.ABI.Entry;
 
 import java.lang.StringBuilder;
 import java.util.ArrayList;

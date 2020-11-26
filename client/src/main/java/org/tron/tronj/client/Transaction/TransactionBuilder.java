@@ -13,7 +13,7 @@ package org.tron.tronj.client.Transaction;
  */
 
 import com.google.protobuf.ByteString;
-import com.github.ki5fpl.tronj.proto.Chain.Transaction;
+import org.tron.tronj.proto.Chain.Transaction;
 
 public class TransactionBuilder {
     private Transaction transaction;

@@ -16,12 +16,12 @@ package org.tron.tronj.client.contract;
  */
 
 import com.google.protobuf.ByteString;
-import com.github.ki5fpl.tronj.proto.Chain.Transaction;
-import com.github.ki5fpl.tronj.proto.Common.SmartContract;
-import com.github.ki5fpl.tronj.proto.Common.SmartContract.ABI;
-import com.github.ki5fpl.tronj.proto.Common.SmartContract.ABI.Entry;
-import com.github.ki5fpl.tronj.proto.Common.SmartContract.ABI.Entry.Param;
-import com.github.ki5fpl.tronj.proto.Contract.CreateSmartContract;
+import org.tron.tronj.proto.Chain.Transaction;
+import org.tron.tronj.proto.Common.SmartContract;
+import org.tron.tronj.proto.Common.SmartContract.ABI;
+import org.tron.tronj.proto.Common.SmartContract.ABI.Entry;
+import org.tron.tronj.proto.Common.SmartContract.ABI.Entry.Param;
+import org.tron.tronj.proto.Contract.CreateSmartContract;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -224,7 +224,7 @@ public class Contract {
 
   /**
    * Convert abi entries to ContractFunction objects
-   * @see com.github.ki5fpl.tronj.proto.Common.SmartContract.ABI.Entry;
+   * @see org.tron.tronj.proto.Common.SmartContract.ABI.Entry;
    * @see ContractFunction ;
    */
   private void abiToFunctions() {

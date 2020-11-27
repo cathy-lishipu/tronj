@@ -26,6 +26,7 @@ import org.tron.tronj.api.GrpcAPI;
 import org.tron.tronj.api.GrpcAPI.BytesMessage;
 
 import org.tron.tronj.api.WalletGrpc;
+import org.tron.tronj.api.WalletSolidityGrpc;
 import org.tron.tronj.client.contract.Contract;
 import org.tron.tronj.client.contract.ContractFunction;
 import org.tron.tronj.client.Transaction.TransactionBuilder;
@@ -42,10 +43,13 @@ import org.tron.tronj.proto.Contract.FreezeBalanceContract;
 import org.tron.tronj.proto.Contract.TransferContract;
 import org.tron.tronj.proto.Contract.VoteWitnessContract;
 import org.tron.tronj.proto.Contract.TriggerSmartContract;
+import org.tron.tronj.proto.Response;
 import org.tron.tronj.proto.Response.TransactionExtention;
 import org.tron.tronj.proto.Response.TransactionReturn;
 import org.tron.tronj.proto.Response.NodeInfo;
 import org.tron.tronj.proto.Response.WitnessList;
+import org.tron.tronj.proto.Response.BlockExtention;
+import org.tron.tronj.proto.Response.BlockListExtention;
 import org.tron.tronj.api.GrpcAPI.NumberMessage;
 import org.tron.tronj.api.GrpcAPI.EmptyMessage;
 import org.tron.tronj.api.GrpcAPI.AccountAddressMessage;
@@ -74,29 +78,34 @@ import java.util.List;
 
 public class TronClient {
     public final WalletGrpc.WalletBlockingStub blockingStub;
+    public final WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity;
     public final SECP256K1.KeyPair keyPair;
 
-    public TronClient(String grpcEndpoint, String hexPrivateKey) {
+    public TronClient(String grpcEndpoint, String grpcEndpointSolidity, String hexPrivateKey) {
         ManagedChannel channel = ManagedChannelBuilder.forTarget(grpcEndpoint).usePlaintext().build();
+        ManagedChannel channelSolidity = ManagedChannelBuilder.forTarget(grpcEndpointSolidity).usePlaintext().build();
         blockingStub = WalletGrpc.newBlockingStub(channel);
+        blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
         keyPair = SECP256K1.KeyPair.create(SECP256K1.PrivateKey.create(Bytes32.fromHexString(hexPrivateKey)));
     }
 
-    public TronClient(Channel channel, String hexPrivateKey) {
+    /*public TronClient(Channel channel, String hexPrivateKey) {
         blockingStub = WalletGrpc.newBlockingStub(channel);
+        blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channel);
         keyPair = SECP256K1.KeyPair.create(SECP256K1.PrivateKey.create(Bytes32.fromHexString(hexPrivateKey)));
-    }
+    }*/
 
     public static TronClient ofMainnet(String hexPrivateKey) {
-        return new TronClient("grpc.trongrid.io:50051", hexPrivateKey);
+
+        return new TronClient("grpc.trongrid.io:50051", "grpc.trongrid.io:50052",hexPrivateKey);
     }
 
     public static TronClient ofShasta(String hexPrivateKey) {
-        return new TronClient("grpc.shasta.trongrid.io:50051", hexPrivateKey);
+        return new TronClient("grpc.shasta.trongrid.io:50051", "grpc.shasta.trongrid.io:50052", hexPrivateKey);
     }
 
     public static TronClient ofNile(String hexPrivateKey) {
-        return new TronClient("47.252.19.181:50051", hexPrivateKey);
+        return new TronClient("47.252.19.181:50051", "47.252.19.181:50052", hexPrivateKey);
     }
 
     public static String generateAddress() {
@@ -214,15 +223,15 @@ public class TronClient {
 
     /**
      * Transfer TRX. amount in SUN
-     * @param from owner address
-     * @param to receive balance
+     * @param fromAddress owner address
+     * @param toAddress receive balance
      * @param amount transfer amount
-     * @return TransactionReturn
+     * @return TransactionExtention
      */
-    public TransactionReturn transfer(String from, String to, long amount) throws IllegalNumException{
+    public TransactionExtention transfer(String fromAddress, String toAddress, long amount) throws IllegalNumException{
 
-        ByteString rawFrom = parseAddress(from);
-        ByteString rawTo = parseAddress(to);
+        ByteString rawFrom = parseAddress(fromAddress);
+        ByteString rawTo = parseAddress(toAddress);
 
         TransferContract req = TransferContract.newBuilder()
                 .setOwnerAddress(rawFrom)
@@ -235,24 +244,21 @@ public class TronClient {
             throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
-        Transaction signedTxn = signTransaction(txnExt);
-
-        TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
-        return ret;
+        return txnExt;
     }
 
     /**
      * Transfers TRC10 Asset
-     * @param from owner address
-     * @param to receive balance
+     * @param fromAddress owner address
+     * @param toAddress receive balance
      * @param tokenId asset name
      * @param amount transfer amount
-     * @return TransactionReturn
+     * @return TransactionExtention
      */
-    public TransactionReturn transferTrc10(String from, String to, int tokenId, long amount) throws IllegalNumException{
+    public TransactionExtention transferTrc10(String fromAddress, String toAddress, int tokenId, long amount) throws IllegalNumException{
 
-        ByteString rawFrom = parseAddress(from);
-        ByteString rawTo = parseAddress(to);
+        ByteString rawFrom = parseAddress(fromAddress);
+        ByteString rawTo = parseAddress(toAddress);
         byte[] rawTokenId = Integer.toString(tokenId).getBytes();
 
         TransferAssetContract req = TransferAssetContract.newBuilder()
@@ -268,28 +274,25 @@ public class TronClient {
             throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
-        Transaction signedTxn = signTransaction(txnExt);
-
-        TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
-        return ret;
+        return txnExt;
     }
 
     /**
      * Freeze balance to get energy or bandwidth, for 3 days
-     * @param from owner address
-     * @param balance frozen balance
-     * @param duration frozen duration
+     * @param ownerAddress owner address
+     * @param frozenBalance frozen balance
+     * @param frozenDuration frozen duration
      * @param resourceCode Resource type, can be 0("BANDWIDTH") or 1("ENERGY")
-     * @return TransactionReturn
+     * @return TransactionExtention
      */
-    public TransactionReturn freezeBalance(String from, long balance, long duration, int resourceCode) throws IllegalNumException{
+    public TransactionExtention freezeBalance(String ownerAddress, long frozenBalance, long frozenDuration, int resourceCode) throws IllegalNumException{
 
-        ByteString rawFrom = parseAddress(from);
+        ByteString rawFrom = parseAddress(ownerAddress);
         FreezeBalanceContract freezeBalanceContract=
                 FreezeBalanceContract.newBuilder()
                         .setOwnerAddress(rawFrom)
-                        .setFrozenBalance(balance)
-                        .setFrozenDuration(duration)
+                        .setFrozenBalance(frozenBalance)
+                        .setFrozenDuration(frozenDuration)
                         .setResourceValue(resourceCode)
                         .build();
         TransactionExtention txnExt = blockingStub.freezeBalance2(freezeBalanceContract);
@@ -298,18 +301,15 @@ public class TronClient {
             throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
-        Transaction signedTxn = signTransaction(txnExt);
-
-        TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
-        return ret;
+        return txnExt;
     }
 
-    public TransactionReturn unfreezeBalance(String from, int resource) throws IllegalNumException{
+    public TransactionExtention unfreezeBalance(String ownerAddress, int resourceCode) throws IllegalNumException{
 
         UnfreezeBalanceContract unfreeze =
                 UnfreezeBalanceContract.newBuilder()
-                        .setOwnerAddress(parseAddress(from))
-                        .setResourceValue(resource)
+                        .setOwnerAddress(parseAddress(ownerAddress))
+                        .setResourceValue(resourceCode)
                         .build();
 
         TransactionExtention txnExt = blockingStub.unfreezeBalance2(unfreeze);
@@ -318,10 +318,7 @@ public class TronClient {
             throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
-        Transaction signedTxn = signTransaction(txnExt);
-
-        TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
-        return ret;
+        return txnExt;
     }
 
     public Block getBlockByNum(long blockNum) throws IllegalNumException {
@@ -392,6 +389,63 @@ public class TronClient {
         }
         return account;
     }
+   //All other solidified APIs start
+    public Account getAccountSolidity(String address) throws IllegalNumException {
+        ByteString bsAddress = parseAddress(address);
+        AccountAddressMessage accountAddressMessage = AccountAddressMessage.newBuilder()
+                .setAddress(bsAddress)
+                .build();
+        Account account = blockingStubSolidity.getAccount(accountAddressMessage);
+
+        System.out.println(account);
+        if(account.getCreateTime() == 0){
+            throw new IllegalNumException();
+        }
+        return account;
+    }
+
+    public BlockExtention getNowBlockSolidity() throws IllegalNumException {
+        BlockExtention blockExtention = blockingStubSolidity.getNowBlock2(EmptyMessage.newBuilder().build());
+        if(!blockExtention.hasBlockHeader()){
+            throw new IllegalNumException("Fail to get latest block.");
+        }
+        return blockExtention;
+    }
+
+    public BlockListExtention getBlockByLatestNumSolidity(long blockNum) throws IllegalNumException {
+        NumberMessage.Builder builder = NumberMessage.newBuilder();
+        builder.setNum(blockNum);
+        BlockListExtention blockListExtention = blockingStubSolidity.getBlockByLatestNum2(builder.build());
+
+        if(blockListExtention.getBlockCount() == 0){
+            throw new IllegalNumException();
+        }
+        return blockListExtention;
+    }
+
+    public Transaction getTransactionByIdSolidity(String txID) throws IllegalNumException {
+        ByteString bsTxid = parseAddress(txID);
+        BytesMessage request = BytesMessage.newBuilder()
+                .setValue(bsTxid)
+                .build();
+        Transaction transaction = blockingStubSolidity.getTransactionById(request);
+
+        if(transaction.getRetCount() == 0){
+            throw new IllegalNumException();
+        }
+        return transaction;
+    }
+
+    public NumberMessage getRewardSolidity(String address) {
+        ByteString bsAddress = parseAddress(address);
+        BytesMessage bytesMessage = BytesMessage.newBuilder()
+                .setValue(bsAddress)
+                .build();
+        NumberMessage numberMessage = blockingStubSolidity.getRewardInfo(bytesMessage);
+
+        return numberMessage;
+    }
+   //All other solidified APIs end
 
     public WitnessList listWitnesses() {
         WitnessList witnessList = blockingStub
@@ -401,40 +455,36 @@ public class TronClient {
 
     /**
      * Vote for witnesses
-     * @param owner owner address
-     * @param witness <witness address, vote count>
-     * @return TransactionReturn
+     * @param ownerAddress owner address
+     * @param votes <vote address, vote count>
+     * @return TransactionExtention
      */
-    public TransactionReturn voteWitness(String owner, HashMap<String, String> witness) throws IllegalNumException{
-        ByteString rawFrom = parseAddress(owner);
-        VoteWitnessContract voteWitnessContract = createVoteWitnessContract(rawFrom, witness);
+    public TransactionExtention voteWitness(String ownerAddress, HashMap<String, String> votes) throws IllegalNumException{
+        ByteString rawFrom = parseAddress(ownerAddress);
+        VoteWitnessContract voteWitnessContract = createVoteWitnessContract(rawFrom, votes);
         TransactionExtention txnExt = blockingStub.voteWitnessAccount2(voteWitnessContract);
 
         if(SUCCESS != txnExt.getResult().getCode()){
             throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
-        Transaction signedTxn = signTransaction(txnExt);
-
-        TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
-
-        return ret;
+        return txnExt;
     }
 
 
-    public static VoteWitnessContract createVoteWitnessContract(ByteString owner,
-                                                                HashMap<String, String> witness) {
+    public static VoteWitnessContract createVoteWitnessContract(ByteString ownerAddress,
+                                                                HashMap<String, String> votes) {
         VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
-        builder.setOwnerAddress(owner);
-        for (String addressBase58 : witness.keySet()) {
-            String value = witness.get(addressBase58);
-            long count = Long.parseLong(value);
+        builder.setOwnerAddress(ownerAddress);
+        for (String addressBase58 : votes.keySet()) {
+            String voteCount = votes.get(addressBase58);
+            long count = Long.parseLong(voteCount);
             VoteWitnessContract.Vote.Builder voteBuilder = VoteWitnessContract.Vote.newBuilder();
-            ByteString address = parseAddress(addressBase58);
-            if (address == null) {
+            ByteString voteAddress = parseAddress(addressBase58);
+            if (voteAddress == null) {
                 continue;
             }
-            voteBuilder.setVoteAddress(address);
+            voteBuilder.setVoteAddress(voteAddress);
             voteBuilder.setVoteCount(count);
             builder.addVotes(voteBuilder.build());
         }

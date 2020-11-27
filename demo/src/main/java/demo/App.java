@@ -17,13 +17,14 @@ import org.tron.tronj.client.TronClient;
 import org.tron.tronj.proto.Chain.Transaction;
 import org.tron.tronj.proto.Contract.TriggerSmartContract;
 import org.tron.tronj.proto.Response.BlockExtention;
+import org.tron.tronj.proto.Response.BlockListExtention;
 import org.tron.tronj.proto.Response.TransactionExtention;
 import org.tron.tronj.proto.Response.TransactionReturn;
 
 import java.math.BigInteger;
 import java.util.*;
-import com.github.ki5fpl.tronj.proto.Chain.Block;
-import com.github.ki5fpl.tronj.proto.Chain.BlockHeader;
+import org.tron.tronj.proto.Chain.Block;
+import org.tron.tronj.proto.Chain.BlockHeader;
 
 public class App {
     public String encodeFunctionCalling() {
@@ -116,7 +117,18 @@ public class App {
         System.out.println("============= getBlockByNum =============");
         TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            Block block = client.getBlockByNum(-1);
+            Block block = client.getBlockByNum(1);
+            System.out.println(block);
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void getBlockByLatestNumSolidity() {
+        System.out.println("============= getBlockByNum =============");
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            BlockListExtention block = client.getBlockByLatestNumSolidity(1);
             System.out.println(block);
         } catch (Exception e) {
             System.out.println("error: " + e);
@@ -127,7 +139,17 @@ public class App {
         System.out.println("============= getNowBlock =============");
         TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            client.getNowBlock();
+            System.out.println(client.getNowBlock());
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void getNowBlockSolidity() {
+        System.out.println("============= getNowBlockSolidity =============");
+        TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            System.out.println(client.getNowBlockSolidity());
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
@@ -237,6 +259,16 @@ public class App {
         }
     }
 
+    public void getTransactionByIdSolidity() {
+        System.out.println("============= getTransactionByIdSolidity =============");
+        TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            System.out.println(client.getTransactionByIdSolidity("3535304212e0090d421ec88cd194d35875b748c0ad453fcde6d7b4d43e852ced"));
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
     /**
      * This is a constant call demo
      */
@@ -255,11 +287,32 @@ public class App {
         System.out.println("============= getAccount =============");
         TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            client.getAccount("415CBDD86A2FA8DC4BDDD8A8F69DBA48572EEC07Fa");
+            client.getAccount("415CBDD86A2FA8DC4BDDD8A8F69DBA48572EEC07FB");
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
     }
+
+    public void getAccountSolidity(){
+        System.out.println("============= getAccountSolidity =============");
+        TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            System.out.println(client.getAccountSolidity("TKwVM5tsELuTE3a5SUCWiQyVtEgxejL5Wj"));
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
+    public void getRewardSolidity(){
+        System.out.println("============= getRewardSolidity =============");
+        TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            System.out.println(client.getRewardSolidity("TNSdGcMvSDwksounpkN1ZCmA7V5QLEDtWu"));
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }
+
 
     public void listWitnesses(){
         System.out.println("============= listWitnesses =============");
@@ -330,11 +383,14 @@ public class App {
 //        app.getTransactionInfoByBlockNum();
 //        app.getTransactionInfoById();
 //        app.getAccount();
-        app.listWitnesses();
+//        app.getAccountSolidity();
+//        app.listWitnesses();
 //        app.voteWitness();
       // app.transferTrc20();
         // app.getSmartContract();
         // app.viewContractName();
 //        app.triggerCallDemo();
+//        app.getAccountSolidity();
+        app.getTransactionByIdSolidity();
     }
 }

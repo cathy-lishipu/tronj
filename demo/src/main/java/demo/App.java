@@ -12,15 +12,18 @@ import org.tron.tronj.abi.datatypes.generated.Uint32;
 import org.tron.tronj.abi.datatypes.*;
 import org.tron.tronj.client.contract.Contract;
 import org.tron.tronj.client.contract.ContractFunction;
-import org.tron.tronj.client.transaction.TransactionBuilder;
+import org.tron.tronj.client.Transaction.TransactionBuilder;
 import org.tron.tronj.client.TronClient;
 import org.tron.tronj.proto.Chain.Transaction;
 import org.tron.tronj.proto.Contract.TriggerSmartContract;
 import org.tron.tronj.proto.Response.BlockExtention;
 import org.tron.tronj.proto.Response.TransactionExtention;
 import org.tron.tronj.proto.Response.TransactionReturn;
+
 import java.math.BigInteger;
 import java.util.*;
+import com.github.ki5fpl.tronj.proto.Chain.Block;
+import com.github.ki5fpl.tronj.proto.Chain.BlockHeader;
 
 public class App {
     public String encodeFunctionCalling() {
@@ -55,6 +58,16 @@ public class App {
         //    (Arrays.asList(new Uint(BigInteger.valueOf(55)), new Uint(BigInteger.valueOf(7)))));
     }
 
+    /*public void signTransaction() {
+        System.out.println("============= signTransaction =============");
+        TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
+        try {
+            client.signTransaction(, 1_000_000L, 3L,1);
+        } catch (Exception e) {
+            System.out.println("error: " + e);
+        }
+    }*/
+
     public void trc20Encode() {
         Function trc20Transfer = new Function("transfer",
                 Arrays.asList(new Address("TV3KSjZHF4o6bC92SMrjhNJ3RE65xHNDuo"),
@@ -81,7 +94,7 @@ public class App {
         System.out.println("============= freeze balance =============");
         TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            client.freezeBalance("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", 1_000_000L, 3L,1, "TVjsyZ7fYF3qLF6BQgPmTEZy1xrNNyVAAA");
+            client.freezeBalance("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8", 1_000_000L, 3L,1);
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
@@ -103,7 +116,8 @@ public class App {
         System.out.println("============= getBlockByNum =============");
         TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            client.getBlockByNum(1);
+            Block block = client.getBlockByNum(-1);
+            System.out.println(block);
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
@@ -143,9 +157,9 @@ public class App {
         System.out.println("============= getTransactionInfoByBlockNum =============");
         TronClient client = TronClient.ofNile("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            client.getTransactionInfoByBlockNum(10530140);
+            client.getTransactionInfoByBlockNum(800000000);
         } catch (Exception e) {
-           System.out.println("error: " + e);
+            System.out.println("error: " + e);
         }
     }
           
@@ -213,12 +227,12 @@ public class App {
         }
     }
 
-    public void getTransactionInfoById(){
+    public void getTransactionInfoById() {
         System.out.println("============= getTransactionInfoById =============");
         TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            client.getTransactionInfoById("-aeae4cfa252b72566e7c77a6274d35c3a1526804215f949c46bbea06e252d8de");
-          } catch (Exception e) {
+            client.getTransactionInfoById("aeae4cfa252b72566e7c77a6274d35c3a1526804215f949c46bbea06e252d8da");
+        } catch (Exception e) {
             System.out.println("error: " + e);
         }
     }
@@ -241,7 +255,7 @@ public class App {
         System.out.println("============= getAccount =============");
         TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            client.getAccount("415CBDD86A2FA8DC4BDDD8A8F69DBA48572EEC07FB");
+            client.getAccount("415CBDD86A2FA8DC4BDDD8A8F69DBA48572EEC07Fa");
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
@@ -261,7 +275,7 @@ public class App {
         System.out.println("============= voteWitness =============");
         TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         HashMap<String, String> witness = new HashMap<>();
-        witness.put("41F16412B9A17EE9408646E2A21E16478F72ED1E95","1");
+        witness.put("41F16412B9A17EE9408646E2A21E16478F72ED1E95","-1");
         try {
             client.voteWitness("TJRabPrwbZy45sbavfcjinPJC18kjpRTv8",witness);
         } catch (Exception e) {
@@ -303,6 +317,7 @@ public class App {
         App app = new App();
 //        System.out.println(app.encodeFunctionCalling());
 //        app.decodeFunctionReturn();
+//        app.signTransaction();
 //        app.trc20Encode();
 //        app.sendTrx();
 //        app.sendTrc20();
@@ -313,13 +328,13 @@ public class App {
 //        app.getNodeInfo();
 //        app.listNodes();
 //        app.getTransactionInfoByBlockNum();
-        app.getTransactionInfoById();
+//        app.getTransactionInfoById();
 //        app.getAccount();
-//        app.listWitnesses();
+        app.listWitnesses();
 //        app.voteWitness();
       // app.transferTrc20();
         // app.getSmartContract();
         // app.viewContractName();
-        app.triggerCallDemo();
+//        app.triggerCallDemo();
     }
 }

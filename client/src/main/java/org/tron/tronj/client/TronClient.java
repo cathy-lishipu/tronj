@@ -111,11 +111,6 @@ public class TronClient {
         rawAddr[0] = 0x41;
         System.arraycopy(raw, 12, rawAddr, 1, 20);
 
-        System.out.println("Base58Check: " + Base58Check.bytesToBase58(rawAddr));
-        System.out.println("Hex Address: " + Hex.toHexString(rawAddr));
-        System.out.println("Public Key:  " + Hex.toHexString(pubKey.getEncoded()));
-        System.out.println("Private Key: " + Hex.toHexString(kp.getPrivateKey().getEncoded()));
-
         return Hex.toHexString(kp.getPrivateKey().getEncoded());
     }
 
@@ -217,9 +212,14 @@ public class TronClient {
         return signTransaction(txn, keyPair);
     }
 
-    public void transfer(String from, String to, long amount) {
-        System.out.println("Transfer from: " + from);
-        System.out.println("Transfer to: " + from);
+    /**
+     * Transfer TRX. amount in SUN
+     * @param from owner address
+     * @param to receive balance
+     * @param amount transfer amount
+     * @return TransactionReturn
+     */
+    public TransactionReturn transfer(String from, String to, long amount) throws IllegalNumException{
 
         ByteString rawFrom = parseAddress(from);
         ByteString rawTo = parseAddress(to);
@@ -229,26 +229,27 @@ public class TronClient {
                 .setToAddress(rawTo)
                 .setAmount(amount)
                 .build();
-        System.out.println("transfer => " + req.toString());
-
         TransactionExtention txnExt = blockingStub.createTransaction2(req);
-        System.out.println("txn id => " + Hex.toHexString(txnExt.getTxid().toByteArray()));
-        System.out.println("Code = " + txnExt.getResult().getCode());
+
         if(SUCCESS != txnExt.getResult().getCode()){
-            System.out.println("Message = " + txnExt.getResult().getMessage().toStringUtf8());
+            throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
         Transaction signedTxn = signTransaction(txnExt);
 
-        System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
-        System.out.println("======== Result ========\n" + ret.toString());
+        return ret;
     }
 
-    public void transferTrc10(String from, String to, int tokenId, long amount) {
-        System.out.println("Transfer from: " + from);
-        System.out.println("Transfer to: " + from);
-        System.out.println("Token id: " + tokenId);
+    /**
+     * Transfers TRC10 Asset
+     * @param from owner address
+     * @param to receive balance
+     * @param tokenId asset name
+     * @param amount transfer amount
+     * @return TransactionReturn
+     */
+    public TransactionReturn transferTrc10(String from, String to, int tokenId, long amount) throws IllegalNumException{
 
         ByteString rawFrom = parseAddress(from);
         ByteString rawTo = parseAddress(to);
@@ -260,50 +261,50 @@ public class TronClient {
                 .setAssetName(ByteString.copyFrom(rawTokenId))
                 .setAmount(amount)
                 .build();
-        System.out.println("transfer TRC10 => " + req.toString());
 
         TransactionExtention txnExt = blockingStub.transferAsset2(req);
-        System.out.println("txn id => " + Hex.toHexString(txnExt.getTxid().toByteArray()));
-        System.out.println("Code = " + txnExt.getResult().getCode());
+
         if(SUCCESS != txnExt.getResult().getCode()){
-            System.out.println("Message = " + txnExt.getResult().getMessage().toStringUtf8());
+            throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
         Transaction signedTxn = signTransaction(txnExt);
 
-        System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
-        System.out.println("======== Result ========\n" + ret.toString());
+        return ret;
     }
 
-    public void freezeBalance(String from, long balance, long duration, int resourceCode, String receive) {
+    /**
+     * Freeze balance to get energy or bandwidth, for 3 days
+     * @param from owner address
+     * @param balance frozen balance
+     * @param duration frozen duration
+     * @param resourceCode Resource type, can be 0("BANDWIDTH") or 1("ENERGY")
+     * @return TransactionReturn
+     */
+    public TransactionReturn freezeBalance(String from, long balance, long duration, int resourceCode) throws IllegalNumException{
 
         ByteString rawFrom = parseAddress(from);
-        ByteString rawReceive = parseAddress(receive);
         FreezeBalanceContract freezeBalanceContract=
                 FreezeBalanceContract.newBuilder()
                         .setOwnerAddress(rawFrom)
                         .setFrozenBalance(balance)
                         .setFrozenDuration(duration)
                         .setResourceValue(resourceCode)
-                        .setReceiverAddress(rawReceive)
                         .build();
-        System.out.println("freezeBalance => " + freezeBalanceContract.toString());
         TransactionExtention txnExt = blockingStub.freezeBalance2(freezeBalanceContract);
-        System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
-        System.out.println("Code = " + txnExt.getResult().getCode());
+
         if(SUCCESS != txnExt.getResult().getCode()){
-            System.out.println("Message = " + txnExt.getResult().getMessage().toStringUtf8());
+            throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
         Transaction signedTxn = signTransaction(txnExt);
 
-        System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
-        System.out.println("======== Result ========\n" + ret.toString());
+        return ret;
     }
 
-    public void unfreezeBalance(String from, int resource) {
+    public TransactionReturn unfreezeBalance(String from, int resource) throws IllegalNumException{
 
         UnfreezeBalanceContract unfreeze =
                 UnfreezeBalanceContract.newBuilder()
@@ -312,93 +313,112 @@ public class TronClient {
                         .build();
 
         TransactionExtention txnExt = blockingStub.unfreezeBalance2(unfreeze);
-        System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
-        System.out.println("Code = " + txnExt.getResult().getCode());
+
         if(SUCCESS != txnExt.getResult().getCode()){
-            System.out.println("Message = " + txnExt.getResult().getMessage().toStringUtf8());
+            throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
         Transaction signedTxn = signTransaction(txnExt);
 
-        System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
-        System.out.println("======== Result ========\n" + ret.toString());
+        return ret;
     }
 
-    public Block getBlockByNum(long blockNum) {
+    public Block getBlockByNum(long blockNum) throws IllegalNumException {
         NumberMessage.Builder builder = NumberMessage.newBuilder();
         builder.setNum(blockNum);
-        System.out.println(blockingStub.getBlockByNum(builder.build()));
-        return blockingStub.getBlockByNum(builder.build());
+        Block block = blockingStub.getBlockByNum(builder.build());
+
+        if(!block.hasBlockHeader()){
+            throw new IllegalNumException();
+        }
+        return block;
     }
 
-    public Block getNowBlock() {
-        System.out.println(blockingStub.getNowBlock(EmptyMessage.newBuilder().build()));
-        return blockingStub.getNowBlock(EmptyMessage.newBuilder().build());
+    public Block getNowBlock() throws IllegalNumException {
+        Block block = blockingStub.getNowBlock(EmptyMessage.newBuilder().build());
+        if(!block.hasBlockHeader()){
+            throw new IllegalNumException("Fail to get latest block.");
+        }
+        return block;
     }
 
-    public NodeInfo getNodeInfo() {
-        System.out.println(blockingStub.getNodeInfo(EmptyMessage.newBuilder().build()));
-        return blockingStub.getNodeInfo(EmptyMessage.newBuilder().build());
+    public NodeInfo getNodeInfo() throws IllegalNumException {
+        NodeInfo nodeInfo = blockingStub.getNodeInfo(EmptyMessage.newBuilder().build());
+
+        if(nodeInfo.getBlock().isEmpty()){
+            throw new IllegalNumException("Fail to get node info.");
+        }
+        return nodeInfo;
     }
 
     public NodeList listNodes() {
         NodeList nodeList = blockingStub.listNodes(EmptyMessage.newBuilder().build());
-        System.out.println(blockingStub.listNodes(EmptyMessage.newBuilder().build()));
         return nodeList;
     }
 
-    public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) {
+    public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) throws IllegalNumException {
         NumberMessage.Builder builder = NumberMessage.newBuilder();
         builder.setNum(blockNum);
         TransactionInfoList transactionInfoList = blockingStub.getTransactionInfoByBlockNum(builder.build());
-        System.out.println(blockingStub.getTransactionInfoByBlockNum(builder.build()));
+        if(transactionInfoList.getTransactionInfoCount() == 0){
+            throw new IllegalNumException();
+        }
         return transactionInfoList;
     }
 
-    public TransactionInfo getTransactionInfoById(String txID) {
+    public TransactionInfo getTransactionInfoById(String txID) throws IllegalNumException {
         ByteString bsTxid = parseAddress(txID);
         BytesMessage request = BytesMessage.newBuilder()
                 .setValue(bsTxid)
                 .build();
         TransactionInfo transactionInfo = blockingStub.getTransactionInfoById(request);
-        System.out.println(blockingStub.getTransactionInfoById(request));
+
+        if(transactionInfo.getBlockTimeStamp() == 0){
+            throw new IllegalNumException();
+        }
         return transactionInfo;
     }
 
-    public Account getAccount(String address) {
+    public Account getAccount(String address) throws IllegalNumException {
         ByteString bsAddress = parseAddress(address);
-        AccountAddressMessage account = AccountAddressMessage.newBuilder()
+        AccountAddressMessage accountAddressMessage = AccountAddressMessage.newBuilder()
                 .setAddress(bsAddress)
                 .build();
-        System.out.println(blockingStub.getAccount(account));
-        return blockingStub.getAccount(account);
+        Account account = blockingStub.getAccount(accountAddressMessage);
+
+        if(account.getCreateTime() == 0){
+            throw new IllegalNumException();
+        }
+        return account;
     }
 
     public WitnessList listWitnesses() {
         WitnessList witnessList = blockingStub
                 .listWitnesses(EmptyMessage.newBuilder().build());
-        System.out.println(blockingStub
-                .listWitnesses(EmptyMessage.newBuilder().build()));
         return witnessList;
     }
 
-    public boolean voteWitness(String owner, HashMap<String, String> witness) {
+    /**
+     * Vote for witnesses
+     * @param owner owner address
+     * @param witness <witness address, vote count>
+     * @return TransactionReturn
+     */
+    public TransactionReturn voteWitness(String owner, HashMap<String, String> witness) throws IllegalNumException{
         ByteString rawFrom = parseAddress(owner);
         VoteWitnessContract voteWitnessContract = createVoteWitnessContract(rawFrom, witness);
         TransactionExtention txnExt = blockingStub.voteWitnessAccount2(voteWitnessContract);
-        System.out.println("txn id => " + TronClient.toHex(txnExt.getTxid().toByteArray()));
-        System.out.println("Code = " + txnExt.getResult().getCode());
+
         if(SUCCESS != txnExt.getResult().getCode()){
-            System.out.println("Message = " + txnExt.getResult().getMessage().toStringUtf8());
+            throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
         Transaction signedTxn = signTransaction(txnExt);
 
-        System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
-        System.out.println("======== Result ========\n" + ret.toString());
-        return true;
+
+        return ret;
     }
 
 
@@ -418,11 +438,10 @@ public class TronClient {
             voteBuilder.setVoteCount(count);
             builder.addVotes(voteBuilder.build());
         }
-
         return builder.build();
     }
 
-    public void transferTrc20(String from, String to, String cntr, long feeLimit, long amount, int precision) throws Exception {
+    public void transferTrc20(String from, String to, String cntr, long feeLimit, long amount, int precision) {
         System.out.println("============ TRC20 transfer =============");
 
         // transfer(address _to,uint256 _amount) returns (bool)
@@ -464,7 +483,7 @@ public class TronClient {
      * @return the smart contract obtained from the address
      * @throws Exception if contract address does not match
      */
-    public Contract getContract(String contractAddress) throws Exception{
+    public Contract getContract(String contractAddress) {
         ByteString rawAddr = parseAddress(contractAddress);
         BytesMessage param = 
             BytesMessage.newBuilder()

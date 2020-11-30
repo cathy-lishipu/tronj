@@ -75,6 +75,7 @@ import java.util.List;
 public class TronClient {
     public final WalletGrpc.WalletBlockingStub blockingStub;
     public final SECP256K1.KeyPair keyPair;
+    public final WalletSolidityGrpc.WalletSolidityBlockingStub s;
 
     public TronClient(String grpcEndpoint, String hexPrivateKey) {
         ManagedChannel channel = ManagedChannelBuilder.forTarget(grpcEndpoint).usePlaintext().build();
@@ -531,6 +532,7 @@ public class TronClient {
     private TransactionExtention callWithoutBroadcast(String ownerAddr, Contract cntr, Function function) {
         cntr.setOwnerAddr(parseAddress(ownerAddr));
             String encodedHex = FunctionEncoder.encode(function);
+            // Make a TriggerSmartContract contract
             TriggerSmartContract trigger = 
                 TriggerSmartContract.newBuilder()
                 .setOwnerAddress(cntr.getOwnerAddr())
@@ -538,10 +540,10 @@ public class TronClient {
                 .setData(parseHex(encodedHex))
                 .build();
 
-            System.out.println("trigger:\n" + trigger);
+            // System.out.println("trigger:\n" + trigger);
 
             TransactionExtention txnExt = blockingStub.triggerConstantContract(trigger);
-            System.out.println("txn id => " + toHex(txnExt.getTxid().toByteArray()));
+            // System.out.println("txn id => " + toHex(txnExt.getTxid().toByteArray()));
 
             return txnExt;
     }
@@ -580,5 +582,5 @@ public class TronClient {
             throw new RuntimeException("Function not found in the contract");
         }
     }
-
+    
 }

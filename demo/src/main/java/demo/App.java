@@ -22,8 +22,8 @@ import org.tron.tronj.proto.Response.TransactionReturn;
 
 import java.math.BigInteger;
 import java.util.*;
-import com.github.ki5fpl.tronj.proto.Chain.Block;
-import com.github.ki5fpl.tronj.proto.Chain.BlockHeader;
+import org.tron.tronj.proto.Chain.Block;
+import org.tron.tronj.proto.Chain.BlockHeader;
 
 public class App {
     public String encodeFunctionCalling() {
@@ -255,7 +255,7 @@ public class App {
         System.out.println("============= getAccount =============");
         TronClient client = TronClient.ofShasta("3333333333333333333333333333333333333333333333333333333333333333");
         try {
-            client.getAccount("415CBDD86A2FA8DC4BDDD8A8F69DBA48572EEC07Fa");
+            client.getAccountS("415CBDD86A2FA8DC4BDDD8A8F69DBA48572EEC07Fa");
         } catch (Exception e) {
             System.out.println("error: " + e);
         }
@@ -329,8 +329,8 @@ public class App {
 //        app.listNodes();
 //        app.getTransactionInfoByBlockNum();
 //        app.getTransactionInfoById();
-//        app.getAccount();
-        app.listWitnesses();
+       app.getAccount();
+        // app.listWitnesses();
 //        app.voteWitness();
       // app.transferTrc20();
         // app.getSmartContract();

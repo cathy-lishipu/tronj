@@ -1,11 +1,11 @@
 package org.tron.tronj.client;
 
-public class IllegalNumException extends  Exception {
-    public IllegalNumException(){
+public class IllegalException extends  Exception {
+    public IllegalException(){
         super("The query failed, please check if the parameters are correct.");
     }
 
-    public IllegalNumException(String message){
+    public IllegalException(String message){
         super(message);
     }
 }

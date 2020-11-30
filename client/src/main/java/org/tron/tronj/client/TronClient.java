@@ -14,15 +14,9 @@ package org.tron.tronj.client;
  * @see org.tron.tronj.proto.Contract
  */
 
-import org.tron.tronj.abi.TypeReference;
-import org.tron.tronj.abi.datatypes.Address;
-import org.tron.tronj.abi.datatypes.Bool;
-import org.tron.tronj.abi.datatypes.generated.Uint256;
-
 
 import org.tron.tronj.abi.FunctionEncoder;
 import org.tron.tronj.abi.datatypes.Function;
-import org.tron.tronj.api.GrpcAPI;
 import org.tron.tronj.api.GrpcAPI.BytesMessage;
 
 import org.tron.tronj.api.WalletGrpc;
@@ -43,25 +37,20 @@ import org.tron.tronj.proto.Contract.FreezeBalanceContract;
 import org.tron.tronj.proto.Contract.TransferContract;
 import org.tron.tronj.proto.Contract.VoteWitnessContract;
 import org.tron.tronj.proto.Contract.TriggerSmartContract;
-import org.tron.tronj.proto.Response;
 import org.tron.tronj.proto.Response.TransactionExtention;
 import org.tron.tronj.proto.Response.TransactionReturn;
 import org.tron.tronj.proto.Response.NodeInfo;
 import org.tron.tronj.proto.Response.WitnessList;
 import org.tron.tronj.proto.Response.BlockExtention;
 import org.tron.tronj.proto.Response.BlockListExtention;
-import org.tron.tronj.proto.Response.BlockList;
 import org.tron.tronj.api.GrpcAPI.NumberMessage;
 import org.tron.tronj.api.GrpcAPI.EmptyMessage;
 import org.tron.tronj.api.GrpcAPI.AccountAddressMessage;
 import org.tron.tronj.utils.Base58Check;
 import com.google.protobuf.ByteString;
-import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
-import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -76,7 +65,6 @@ import org.tron.tronj.proto.Response.Account;
 import static org.tron.tronj.proto.Response.TransactionReturn.response_code.SUCCESS;
 
 import java.util.List;
-import java.util.Optional;
 
 public class TronClient {
     public final WalletGrpc.WalletBlockingStub blockingStub;
@@ -111,6 +99,10 @@ public class TronClient {
         return new TronClient("47.252.19.181:50051", "47.252.19.181:50061", hexPrivateKey);
     }
 
+    /**
+     * Generate random address
+     * @return Address in hex
+     */
     public static String generateAddress() {
         // generate random address
         SECP256K1.KeyPair kp = SECP256K1.KeyPair.generate();
@@ -230,8 +222,9 @@ public class TronClient {
      * @param toAddress receive balance
      * @param amount transfer amount
      * @return TransactionExtention
+     * @throws IllegalException if fail to transfer
      */
-    public TransactionExtention transfer(String fromAddress, String toAddress, long amount) throws IllegalNumException{
+    public TransactionExtention transfer(String fromAddress, String toAddress, long amount) throws IllegalException {
 
         ByteString rawFrom = parseAddress(fromAddress);
         ByteString rawTo = parseAddress(toAddress);
@@ -244,7 +237,7 @@ public class TronClient {
         TransactionExtention txnExt = blockingStub.createTransaction2(req);
 
         if(SUCCESS != txnExt.getResult().getCode()){
-            throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
+            throw new IllegalException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
         return txnExt;
@@ -257,8 +250,9 @@ public class TronClient {
      * @param tokenId asset name
      * @param amount transfer amount
      * @return TransactionExtention
+     * @throws IllegalException if fail to transfer trc10
      */
-    public TransactionExtention transferTrc10(String fromAddress, String toAddress, int tokenId, long amount) throws IllegalNumException{
+    public TransactionExtention transferTrc10(String fromAddress, String toAddress, int tokenId, long amount) throws IllegalException {
 
         ByteString rawFrom = parseAddress(fromAddress);
         ByteString rawTo = parseAddress(toAddress);
@@ -274,7 +268,7 @@ public class TronClient {
         TransactionExtention txnExt = blockingStub.transferAsset2(req);
 
         if(SUCCESS != txnExt.getResult().getCode()){
-            throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
+            throw new IllegalException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
         return txnExt;
@@ -287,8 +281,9 @@ public class TronClient {
      * @param frozenDuration frozen duration
      * @param resourceCode Resource type, can be 0("BANDWIDTH") or 1("ENERGY")
      * @return TransactionExtention
+     * @throws IllegalException if fail to freeze balance
      */
-    public TransactionExtention freezeBalance(String ownerAddress, long frozenBalance, long frozenDuration, int resourceCode) throws IllegalNumException{
+    public TransactionExtention freezeBalance(String ownerAddress, long frozenBalance, long frozenDuration, int resourceCode) throws IllegalException {
 
         ByteString rawFrom = parseAddress(ownerAddress);
         FreezeBalanceContract freezeBalanceContract=
@@ -301,13 +296,20 @@ public class TronClient {
         TransactionExtention txnExt = blockingStub.freezeBalance2(freezeBalanceContract);
 
         if(SUCCESS != txnExt.getResult().getCode()){
-            throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
+            throw new IllegalException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
         return txnExt;
     }
 
-    public TransactionExtention unfreezeBalance(String ownerAddress, int resourceCode) throws IllegalNumException{
+    /**
+     * Unfreeze balance to get TRX back
+     * @param ownerAddress owner address
+     * @param resourceCode Resource type, can be 0("BANDWIDTH") or 1("ENERGY")
+     * @return TransactionExtention
+     * @throws IllegalException if fail to unfreeze balance
+     */
+    public TransactionExtention unfreezeBalance(String ownerAddress, int resourceCode) throws IllegalException {
 
         UnfreezeBalanceContract unfreeze =
                 UnfreezeBalanceContract.newBuilder()
@@ -318,70 +320,128 @@ public class TronClient {
         TransactionExtention txnExt = blockingStub.unfreezeBalance2(unfreeze);
 
         if(SUCCESS != txnExt.getResult().getCode()){
-            throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
+            throw new IllegalException(txnExt.getResult().getMessage().toStringUtf8());
         }
 
         return txnExt;
     }
 
-    public Block getBlockByNum(long blockNum) throws IllegalNumException {
+    /**
+     * Vote for witnesses
+     * @param ownerAddress owner address
+     * @param votes <vote address, vote count>
+     * @return TransactionExtention
+     * IllegalNumException if fail to vote witness
+     */
+    public TransactionExtention voteWitness(String ownerAddress, HashMap<String, String> votes) throws IllegalException {
+        ByteString rawFrom = parseAddress(ownerAddress);
+        VoteWitnessContract voteWitnessContract = createVoteWitnessContract(rawFrom, votes);
+        TransactionExtention txnExt = blockingStub.voteWitnessAccount2(voteWitnessContract);
+
+        if(SUCCESS != txnExt.getResult().getCode()){
+            throw new IllegalException(txnExt.getResult().getMessage().toStringUtf8());
+        }
+
+        return txnExt;
+    }
+
+    /**
+     * Query the latest block information
+     * @return Block
+     * @throws IllegalException if fail to get now block
+     */
+    public Block getNowBlock() throws IllegalException {
+        Block block = blockingStub.getNowBlock(EmptyMessage.newBuilder().build());
+        if(!block.hasBlockHeader()){
+            throw new IllegalException("Fail to get latest block.");
+        }
+        return block;
+    }
+
+    /**
+     * Returns the Block Object corresponding to the 'Block Height' specified (number of blocks preceding it)
+     * @param blockNum The block height
+     * @return Block
+     * @throws IllegalException if the parameters are not correct
+     */
+    public Block getBlockByNum(long blockNum) throws IllegalException {
         NumberMessage.Builder builder = NumberMessage.newBuilder();
         builder.setNum(blockNum);
         Block block = blockingStub.getBlockByNum(builder.build());
 
         if(!block.hasBlockHeader()){
-            throw new IllegalNumException();
+            throw new IllegalException();
         }
         return block;
     }
 
-    public Block getNowBlock() throws IllegalNumException {
-        Block block = blockingStub.getNowBlock(EmptyMessage.newBuilder().build());
-        if(!block.hasBlockHeader()){
-            throw new IllegalNumException("Fail to get latest block.");
-        }
-        return block;
-    }
-
-    public BlockListExtention getBlockByLatestNum(long num) throws IllegalNumException {
+    /**
+     * Get some latest blocks
+     * @param num Number of latest blocks
+     * @return BlockListExtention
+     * @throws IllegalException if the parameters are not correct
+     */
+    public BlockListExtention getBlockByLatestNum(long num) throws IllegalException {
         NumberMessage numberMessage = NumberMessage.newBuilder().setNum(num).build();
         BlockListExtention blockListExtention = blockingStub.getBlockByLatestNum2(numberMessage);
 
         if(blockListExtention.getBlockCount() == 0){
-            throw new IllegalNumException();
+            throw new IllegalException();
         }
         return blockListExtention;
     }
 
-    public NodeInfo getNodeInfo() throws IllegalNumException {
+    /**
+     * Get current API node’ info
+     * @return NodeInfo
+     * @throws IllegalException if fail to get nodeInfo
+     */
+    public NodeInfo getNodeInfo() throws IllegalException {
         NodeInfo nodeInfo = blockingStub.getNodeInfo(EmptyMessage.newBuilder().build());
 
         if(nodeInfo.getBlock().isEmpty()){
-            throw new IllegalNumException("Fail to get node info.");
+            throw new IllegalException("Fail to get node info.");
         }
         return nodeInfo;
     }
 
-    public NodeList listNodes() throws IllegalNumException {
+    /**
+     * List all nodes that current API node is connected to
+     * @return NodeList
+     * @throws IllegalException if fail to get node list
+     */
+    public NodeList listNodes() throws IllegalException {
         NodeList nodeList = blockingStub.listNodes(EmptyMessage.newBuilder().build());
 
         if(nodeList.getNodesCount() == 0){
-            throw new IllegalNumException("Fail to get node list.");
+            throw new IllegalException("Fail to get node list.");
         }
         return nodeList;
     }
 
-    public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) throws IllegalNumException {
+    /**
+     * Get transactionInfo from block number
+     * @param blockNum The block height
+     * @return TransactionInfoList
+     * @throws IllegalException if the parameters are not correct
+     */
+    public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) throws IllegalException {
         NumberMessage.Builder builder = NumberMessage.newBuilder();
         builder.setNum(blockNum);
         TransactionInfoList transactionInfoList = blockingStub.getTransactionInfoByBlockNum(builder.build());
         if(transactionInfoList.getTransactionInfoCount() == 0){
-            throw new IllegalNumException();
+            throw new IllegalException();
         }
         return transactionInfoList;
     }
 
-    public TransactionInfo getTransactionInfoById(String txID) throws IllegalNumException {
+    /**
+     * Query the transaction fee, block height by transaction id
+     * @param txID Transaction hash, i.e. transaction id
+     * @return TransactionInfo
+     * @throws IllegalException if the parameters are not correct
+     */
+    public TransactionInfo getTransactionInfoById(String txID) throws IllegalException {
         ByteString bsTxid = parseAddress(txID);
         BytesMessage request = BytesMessage.newBuilder()
                 .setValue(bsTxid)
@@ -389,12 +449,18 @@ public class TronClient {
         TransactionInfo transactionInfo = blockingStub.getTransactionInfoById(request);
 
         if(transactionInfo.getBlockTimeStamp() == 0){
-            throw new IllegalNumException();
+            throw new IllegalException();
         }
         return transactionInfo;
     }
 
-    public Account getAccount(String address) throws IllegalNumException {
+    /**
+     * Get account info by address
+     * @param address address, default hexString
+     * @return Account
+     * @throws IllegalException if the parameters are not correct
+     */
+    public Account getAccount(String address) throws IllegalException {
         ByteString bsAddress = parseAddress(address);
         AccountAddressMessage accountAddressMessage = AccountAddressMessage.newBuilder()
                 .setAddress(bsAddress)
@@ -402,12 +468,30 @@ public class TronClient {
         Account account = blockingStub.getAccount(accountAddressMessage);
 
         if(account.getCreateTime() == 0){
-            throw new IllegalNumException();
+            throw new IllegalException();
         }
         return account;
     }
+
+    /**
+     * List all witnesses that current API node is connected to
+     * @return WitnessList
+     */
+    public WitnessList listWitnesses() {
+        WitnessList witnessList = blockingStub
+                .listWitnesses(EmptyMessage.newBuilder().build());
+        return witnessList;
+    }
+
    //All other solidified APIs start
-    public Account getAccountSolidity(String address) throws IllegalNumException {
+
+    /**
+     * Get solid account info by address
+     * @param address address, default hexString
+     * @return Account
+     * @throws IllegalException if the parameters are not correct
+     */
+    public Account getAccountSolidity(String address) throws IllegalException {
         ByteString bsAddress = parseAddress(address);
         AccountAddressMessage accountAddressMessage = AccountAddressMessage.newBuilder()
                 .setAddress(bsAddress)
@@ -415,16 +499,21 @@ public class TronClient {
         Account account = blockingStubSolidity.getAccount(accountAddressMessage);
 
         if(account.getCreateTime() == 0){
-            throw new IllegalNumException();
+            throw new IllegalException();
         }
         return account;
     }
 
-    public BlockExtention getNowBlockSolidity() throws IllegalNumException {
+    /**
+     * Query the latest solid block information
+     * @return BlockExtention
+     * @throws IllegalException if fail to get now block
+     */
+    public BlockExtention getNowBlockSolidity() throws IllegalException {
         BlockExtention blockExtention = blockingStubSolidity.getNowBlock2(EmptyMessage.newBuilder().build());
 
         if(!blockExtention.hasBlockHeader()){
-            throw new IllegalNumException("Fail to get latest block.");
+            throw new IllegalException("Fail to get latest block.");
         }
         return blockExtention;
     }
@@ -440,7 +529,13 @@ public class TronClient {
         return blockListExtention;
     }*/
 
-    public Transaction getTransactionByIdSolidity(String txID) throws IllegalNumException {
+    /**
+     * Get transaction receipt info from a transaction id, must be in solid block
+     * @param txID Transaction hash, i.e. transaction id
+     * @return Transaction
+     * @throws IllegalException if the parameters are not correct
+     */
+    public Transaction getTransactionByIdSolidity(String txID) throws IllegalException {
         ByteString bsTxid = parseAddress(txID);
         BytesMessage request = BytesMessage.newBuilder()
                 .setValue(bsTxid)
@@ -448,12 +543,17 @@ public class TronClient {
         Transaction transaction = blockingStubSolidity.getTransactionById(request);
 
         if(transaction.getRetCount() == 0) {
-            throw new IllegalNumException();
+            throw new IllegalException();
         }
         return transaction;
     }
 
-    public NumberMessage getRewardSolidity(String address) throws IllegalNumException {
+    /**
+     * Get the rewards that the voter has not received
+     * @param address address, default hexString
+     * @return NumberMessage
+     */
+    public NumberMessage getRewardSolidity(String address) throws IllegalException {
         ByteString bsAddress = parseAddress(address);
         BytesMessage bytesMessage = BytesMessage.newBuilder()
                 .setValue(bsAddress)
@@ -462,31 +562,6 @@ public class TronClient {
         return numberMessage;
     }
    //All other solidified APIs end
-
-    public WitnessList listWitnesses() {
-        WitnessList witnessList = blockingStub
-                .listWitnesses(EmptyMessage.newBuilder().build());
-        return witnessList;
-    }
-
-    /**
-     * Vote for witnesses
-     * @param ownerAddress owner address
-     * @param votes <vote address, vote count>
-     * @return TransactionExtention
-     */
-    public TransactionExtention voteWitness(String ownerAddress, HashMap<String, String> votes) throws IllegalNumException{
-        ByteString rawFrom = parseAddress(ownerAddress);
-        VoteWitnessContract voteWitnessContract = createVoteWitnessContract(rawFrom, votes);
-        TransactionExtention txnExt = blockingStub.voteWitnessAccount2(voteWitnessContract);
-
-        if(SUCCESS != txnExt.getResult().getCode()){
-            throw new IllegalNumException(txnExt.getResult().getMessage().toStringUtf8());
-        }
-
-        return txnExt;
-    }
-
 
     public static VoteWitnessContract createVoteWitnessContract(ByteString ownerAddress,
                                                                 HashMap<String, String> votes) {
@@ -507,7 +582,7 @@ public class TronClient {
         return builder.build();
     }
 
-    public void transferTrc20(String from, String to, String cntr, long feeLimit, long amount, int precision) {
+    /*public void transferTrc20(String from, String to, String cntr, long feeLimit, long amount, int precision) {
         System.out.println("============ TRC20 transfer =============");
 
         // transfer(address _to,uint256 _amount) returns (bool)
@@ -541,7 +616,7 @@ public class TronClient {
         System.out.println(signedTxn.toString());
         TransactionReturn ret = blockingStub.broadcastTransaction(signedTxn);
         System.out.println("======== Result ========\n" + ret.toString());
-    }
+    }*/
 
     /**
      * Obtain a {@code Contract} object via an address

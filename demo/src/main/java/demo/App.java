@@ -385,6 +385,8 @@ public class App {
 //        app.getAccount();
 //        app.getAccountSolidity();
 //        app.listWitnesses();
+       app.getAccount();
+        // app.listWitnesses();
 //        app.voteWitness();
       // app.transferTrc20();
         // app.getSmartContract();

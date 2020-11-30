@@ -107,7 +107,7 @@ public class TronClient {
     }
 
     public static TronClient ofNile(String hexPrivateKey) {
-        return new TronClient("47.252.19.181:50051", "47.252.19.181:50052", hexPrivateKey);
+        return new TronClient("47.252.19.181:50051", "47.252.19.181:50061", hexPrivateKey);
     }
 
     public static String generateAddress() {
@@ -212,7 +212,7 @@ public class TronClient {
             throw new RuntimeException(message);
         } else {
             return ret;
-        }     
+        }
     }
 
     public Transaction signTransaction(TransactionExtention txnExt) {
@@ -428,7 +428,7 @@ public class TronClient {
         return blockExtention;
     }
 
-    public BlockListExtention getBlockByLatestNumSolidity(long blockNum) throws IllegalNumException {
+    /*public BlockListExtention getBlockByLatestNumSolidity(long blockNum) throws IllegalNumException {
         NumberMessage.Builder builder = NumberMessage.newBuilder();
         builder.setNum(blockNum);
         BlockListExtention blockListExtention = blockingStubSolidity.getBlockByLatestNum2(builder.build());
@@ -437,7 +437,7 @@ public class TronClient {
             throw new IllegalNumException();
         }
         return blockListExtention;
-    }
+    }*/
 
     public Transaction getTransactionByIdSolidity(String txID) throws IllegalNumException {
         ByteString bsTxid = parseAddress(txID);
@@ -446,19 +446,18 @@ public class TronClient {
                 .build();
         Transaction transaction = blockingStubSolidity.getTransactionById(request);
 
-        if(transaction.getRetCount() == 0){
+        if(transaction.getRetCount() == 0) {
             throw new IllegalNumException();
         }
         return transaction;
     }
 
-    public NumberMessage getRewardSolidity(String address) {
+    public NumberMessage getRewardSolidity(String address) throws IllegalNumException {
         ByteString bsAddress = parseAddress(address);
         BytesMessage bytesMessage = BytesMessage.newBuilder()
                 .setValue(bsAddress)
                 .build();
         NumberMessage numberMessage = blockingStubSolidity.getRewardInfo(bytesMessage);
-
         return numberMessage;
     }
    //All other solidified APIs end
@@ -551,14 +550,14 @@ public class TronClient {
      */
     public Contract getContract(String contractAddress) {
         ByteString rawAddr = parseAddress(contractAddress);
-        BytesMessage param = 
+        BytesMessage param =
             BytesMessage.newBuilder()
             .setValue(rawAddr)
             .build();
-        
+
             SmartContract cntr = blockingStub.getContract(param);
 
-            Contract contract = 
+            Contract contract =
                 new Contract.Builder()
                 .setCntrAddr(cntr.getContractAddress())
                 .setBytecode(cntr.getBytecode())
@@ -592,22 +591,23 @@ public class TronClient {
      * @param ownerAddr the caller
      * @param cntr the contract
      * @param function the function called
-     * @return TransactionExtention 
+     * @return TransactionExtention
      */
     private TransactionExtention callWithoutBroadcast(String ownerAddr, Contract cntr, Function function) {
         cntr.setOwnerAddr(parseAddress(ownerAddr));
             String encodedHex = FunctionEncoder.encode(function);
-            TriggerSmartContract trigger = 
+            // Make a TriggerSmartContract contract
+            TriggerSmartContract trigger =
                 TriggerSmartContract.newBuilder()
                 .setOwnerAddress(cntr.getOwnerAddr())
                 .setContractAddress(cntr.getCntrAddr())
                 .setData(parseHex(encodedHex))
                 .build();
 
-            System.out.println("trigger:\n" + trigger);
+            // System.out.println("trigger:\n" + trigger);
 
             TransactionExtention txnExt = blockingStub.triggerConstantContract(trigger);
-            System.out.println("txn id => " + toHex(txnExt.getTxid().toByteArray()));
+            // System.out.println("txn id => " + toHex(txnExt.getTxid().toByteArray()));
 
             return txnExt;
     }

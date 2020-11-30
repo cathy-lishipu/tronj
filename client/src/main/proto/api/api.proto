@@ -192,7 +192,7 @@ service Wallet {
 service WalletSolidity {
   rpc GetAccount(AccountAddressMessage) returns (Account) {}
   rpc GetNowBlock2(EmptyMessage) returns (BlockExtention) {}
-  rpc GetBlockByLatestNum2(NumberMessage) returns (BlockListExtention) {}
+  // rpc GetBlockByLatestNum2(NumberMessage) returns (BlockListExtention) {}
   rpc GetTransactionById(BytesMessage) returns (Transaction) {}
   rpc GetRewardInfo(BytesMessage) returns (NumberMessage) {}     // ???
 };

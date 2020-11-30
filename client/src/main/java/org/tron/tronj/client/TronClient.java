@@ -50,6 +50,7 @@ import org.tron.tronj.proto.Response.NodeInfo;
 import org.tron.tronj.proto.Response.WitnessList;
 import org.tron.tronj.proto.Response.BlockExtention;
 import org.tron.tronj.proto.Response.BlockListExtention;
+import org.tron.tronj.proto.Response.BlockList;
 import org.tron.tronj.api.GrpcAPI.NumberMessage;
 import org.tron.tronj.api.GrpcAPI.EmptyMessage;
 import org.tron.tronj.api.GrpcAPI.AccountAddressMessage;
@@ -75,6 +76,7 @@ import org.tron.tronj.proto.Response.Account;
 import static org.tron.tronj.proto.Response.TransactionReturn.response_code.SUCCESS;
 
 import java.util.List;
+import java.util.Optional;
 
 public class TronClient {
     public final WalletGrpc.WalletBlockingStub blockingStub;
@@ -124,7 +126,7 @@ public class TronClient {
     }
 
     public static ByteString parseAddress(String address) {
-        byte[] raw = new byte[0];
+        byte[] raw;
         if (address.startsWith("T")) {
             raw = Base58Check.base58ToBytes(address);
         } else if (address.startsWith("41")) {
@@ -340,6 +342,16 @@ public class TronClient {
         return block;
     }
 
+    public BlockListExtention getBlockByLatestNum(long num) throws IllegalNumException {
+        NumberMessage numberMessage = NumberMessage.newBuilder().setNum(num).build();
+        BlockListExtention blockListExtention = blockingStub.getBlockByLatestNum2(numberMessage);
+
+        if(blockListExtention.getBlockCount() == 0){
+            throw new IllegalNumException();
+        }
+        return blockListExtention;
+    }
+
     public NodeInfo getNodeInfo() throws IllegalNumException {
         NodeInfo nodeInfo = blockingStub.getNodeInfo(EmptyMessage.newBuilder().build());
 
@@ -349,8 +361,12 @@ public class TronClient {
         return nodeInfo;
     }
 
-    public NodeList listNodes() {
+    public NodeList listNodes() throws IllegalNumException {
         NodeList nodeList = blockingStub.listNodes(EmptyMessage.newBuilder().build());
+
+        if(nodeList.getNodesCount() == 0){
+            throw new IllegalNumException("Fail to get node list.");
+        }
         return nodeList;
     }
 
@@ -397,7 +413,6 @@ public class TronClient {
                 .build();
         Account account = blockingStubSolidity.getAccount(accountAddressMessage);
 
-        System.out.println(account);
         if(account.getCreateTime() == 0){
             throw new IllegalNumException();
         }
@@ -406,6 +421,7 @@ public class TronClient {
 
     public BlockExtention getNowBlockSolidity() throws IllegalNumException {
         BlockExtention blockExtention = blockingStubSolidity.getNowBlock2(EmptyMessage.newBuilder().build());
+
         if(!blockExtention.hasBlockHeader()){
             throw new IllegalNumException("Fail to get latest block.");
         }

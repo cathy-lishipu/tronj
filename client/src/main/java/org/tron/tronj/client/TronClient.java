@@ -21,6 +21,7 @@ import org.tron.tronj.api.GrpcAPI.BytesMessage;
 
 import org.tron.tronj.api.WalletGrpc;
 import org.tron.tronj.api.WalletSolidityGrpc;
+import org.tron.tronj.client.Exception.IllegalException;
 import org.tron.tronj.client.contract.Contract;
 import org.tron.tronj.client.contract.ContractFunction;
 import org.tron.tronj.client.Transaction.TransactionBuilder;

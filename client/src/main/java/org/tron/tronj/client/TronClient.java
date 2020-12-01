@@ -70,7 +70,6 @@ public class TronClient {
     public final WalletGrpc.WalletBlockingStub blockingStub;
     public final WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity;
     public final SECP256K1.KeyPair keyPair;
-    public final WalletSolidityGrpc.WalletSolidityBlockingStub s;
 
     public TronClient(String grpcEndpoint, String grpcEndpointSolidity, String hexPrivateKey) {
         ManagedChannel channel = ManagedChannelBuilder.forTarget(grpcEndpoint).usePlaintext().build();

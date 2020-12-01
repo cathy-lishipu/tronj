@@ -422,15 +422,15 @@ public class TronClient {
      * Get transactionInfo from block number
      * @param blockNum The block height
      * @return TransactionInfoList
-     * @throws IllegalException if the parameters are not correct
+     * @throws IllegalException no transactions or the blockNum is incorrect
      */
     public TransactionInfoList getTransactionInfoByBlockNum(long blockNum) throws IllegalException {
-        NumberMessage.Builder builder = NumberMessage.newBuilder();
-        builder.setNum(blockNum);
-        TransactionInfoList transactionInfoList = blockingStub.getTransactionInfoByBlockNum(builder.build());
+        NumberMessage numberMessage = NumberMessage.newBuilder().setNum(blockNum).build();
+        TransactionInfoList transactionInfoList = blockingStub.getTransactionInfoByBlockNum(numberMessage);
         if(transactionInfoList.getTransactionInfoCount() == 0){
-            throw new IllegalException();
+            throw new IllegalException("no transactions or the blockNum is incorrect.");
         }
+
         return transactionInfoList;
     }
 
